@@ -12,7 +12,8 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/fulmar" />
-            <option value="$PROJECT_DIR$/fulmar/session" />
+            <option value="$PROJECT_DIR$/fulmar/tango" />
+            <option value="$PROJECT_DIR$/fulmar/tango/session" />
             <option value="$PROJECT_DIR$/supermegazinc" />
             <option value="$PROJECT_DIR$/supermegazinc/ble" />
             <option value="$PROJECT_DIR$/supermegazinc/ble_upgrade" />

@@ -1,4 +1,4 @@
-package com.fulmar.session
+package com.fulmar.tango.session
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.fulmar.session.test", appContext.packageName)
+        assertEquals("com.fulmar.tango.session.test", appContext.packageName)
     }
 }

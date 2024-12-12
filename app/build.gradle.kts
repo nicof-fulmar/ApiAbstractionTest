@@ -39,7 +39,6 @@ dependencies {
     implementation(project(":supermegazinc:escentials"))
     implementation(project(":supermegazinc:ble"))
     implementation(project(":supermegazinc:ble_upgrade"))
-    implementation(project(":fulmar:session"))
     implementation(libs.logger.library)
 
     implementation(libs.androidx.core.ktx)

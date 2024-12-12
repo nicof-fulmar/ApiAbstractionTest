@@ -1,4 +1,4 @@
-package com.fulmar.session.model
+package com.fulmar.tango.session.model
 
 import java.security.interfaces.ECPublicKey
 

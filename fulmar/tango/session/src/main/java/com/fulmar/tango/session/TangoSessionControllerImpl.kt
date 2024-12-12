@@ -1,6 +1,6 @@
-package com.fulmar.session
+package com.fulmar.tango.session
 
-import com.fulmar.session.model.TangoSession
+import com.fulmar.tango.session.model.TangoSession
 import com.supermegazinc.ble_upgrade.BLEUpgradeController
 import com.supermegazinc.ble_upgrade.model.BLEUpgradeConnectionStatus
 import com.supermegazinc.diffie_hellman.DiffieHellmanController

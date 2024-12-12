@@ -1,4 +1,4 @@
-package com.fulmar.session
+package com.fulmar.tango.session
 
 import org.junit.Test
 
