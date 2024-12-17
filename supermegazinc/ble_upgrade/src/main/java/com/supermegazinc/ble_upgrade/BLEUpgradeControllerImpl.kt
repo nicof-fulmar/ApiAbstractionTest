@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
 class BLEUpgradeControllerImpl(
     private val bleController: BLEController,
@@ -71,7 +72,7 @@ class BLEUpgradeControllerImpl(
         )
     }
 
-    override suspend fun connect(name: String, timeoutMillis: Long): Result<Unit, BLEUpgradeConnectionError> {
+    override suspend fun connect(name: String, timeoutMillis: Long, servicesUUID: List<UUID>): Result<Unit, BLEUpgradeConnectionError> {
         return withContext(coroutineScope.coroutineContext) {
             logger.i(LOG_KEY, "CON - $name - Inicio")
             _status.update {
@@ -82,7 +83,7 @@ class BLEUpgradeControllerImpl(
 
             val startMs = System.currentTimeMillis()
 
-            bleController.scanner.start()
+            bleController.scanner.start(servicesUUID)
 
             val scannedDevice = try {
                  bleController.scanner.scannedDevices

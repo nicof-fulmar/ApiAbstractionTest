@@ -76,13 +76,14 @@ class BLEDeviceImpl(
         get() = _characteristics.asStateFlow()
 
     override suspend fun connect(): Result<Unit, BLEGattConnectError> {
-        logger.i(LOG_KEY, "Connect")
+        logger.i(LOG_KEY, "Conectando dispositivo..")
 
         val adapterState = adapter.state.value
         if(adapterState !is Status.Ready || adapterState.data != BLEAdapterState.ON) return Result.Fail(BLEGattConnectError.CANT_CONNECT)
 
         return bleGattController.connect().also { result->
             if(result is Result.Fail) {
+                logger.e(LOG_KEY, "No se pudo conectar")
                 _status.update { BLEDeviceStatus.Disconnected(
                     when(result.error) {
                         BLEGattConnectError.CANT_CONNECT -> BLEDisconnectionReason.CANT_CONNECT
@@ -91,6 +92,8 @@ class BLEDeviceImpl(
                     }
                 )
                 }
+            } else {
+                logger.i(LOG_KEY, "Conectado")
             }
         }
     }
@@ -105,11 +108,12 @@ class BLEDeviceImpl(
     }
 
     override suspend fun disconnect() {
-        logger.i(LOG_KEY, "Disconnect")
+        logger.i(LOG_KEY, "Desconectando dispositivo..")
         clear()
         _status.update {
             BLEDeviceStatus.Disconnected(BLEDisconnectionReason.DISCONNECTED)
         }
+        logger.i(LOG_KEY, "Desconectado")
     }
 
     override fun close() {
@@ -184,7 +188,7 @@ class BLEDeviceImpl(
                 if(status is BLEDeviceStatus.Connected && characteristics.isEmpty()) {
                     while(isActive) {
                         bleGattController.discoverServices()
-                        delay(1000)
+                        delay(2000)
                     }
                 }
             }.collectLatest{}

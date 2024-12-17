@@ -6,6 +6,7 @@ import com.supermegazinc.ble_upgrade.model.BLEUpgradeConnectionStatus
 import com.supermegazinc.diffie_hellman.DiffieHellmanController
 import com.supermegazinc.escentials.Status
 import com.supermegazinc.logger.Logger
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,27 +40,37 @@ class TangoSessionControllerImpl(
     private fun generateSession() {
         generateSessionJob?.cancel()
         generateSessionJob = coroutineScope.launch {
-            val receiveCharacteristic = bleUpgradeController
-                .characteristics
-                .map { it.firstOrNull {char-> receivePublicKeyCharacteristicUUID == char.uuid} }
-                .filterNotNull()
-                .first()
-            receiveCharacteristic.forceRead()
-            val key = receiveCharacteristic.message.filterNotNull().first()
+            try {
+                diffieHellmanController.refreshKey()
 
-            diffieHellmanController.refreshKey()
-            val sharedKey = diffieHellmanController.sharedKey(key) ?: return@launch
+                logger.d(LOG_KEY,"Buscando caracteristica 'SendPublicKey'..")
+                val sendCharacteristic = bleUpgradeController
+                    .characteristics
+                    .map { it.firstOrNull {char-> sendPublicKeyCharacteristicUUID == char.uuid} }
+                    .filterNotNull()
+                    .first()
+                logger.d(LOG_KEY,"Encontrada, enviando clave publica: [${diffieHellmanController.myPublicKeyBytes.size}]: ${diffieHellmanController.myPublicKeyBytes.toList()}")
 
-            val sendCharacteristic = bleUpgradeController
-                .characteristics
-                .map { it.firstOrNull {char-> sendPublicKeyCharacteristicUUID == char.uuid} }
-                .filterNotNull()
-                .first()
+                sendCharacteristic.send(diffieHellmanController.myPublicKeyBytes)
 
-            sendCharacteristic.send(diffieHellmanController.myPublicKey.encoded)
+                logger.d(LOG_KEY,"Buscando caracteristica 'ReceivePublicKey'..")
+                val receiveCharacteristic = bleUpgradeController
+                    .characteristics
+                    .map { it.firstOrNull {char-> receivePublicKeyCharacteristicUUID == char.uuid} }
+                    .filterNotNull()
+                    .first()
+                receiveCharacteristic.forceRead()
+                val key = receiveCharacteristic.message.filterNotNull().first()
+                logger.d(LOG_KEY,"Encontrada, clave recibida: [${key.size}]: ${key.toList()}")
 
-            println(sharedKey)
+                val sharedKey = diffieHellmanController.sharedKey(key) ?: return@launch
 
+                logger.d(LOG_KEY,"Clave compartida: [${sharedKey.size}]: ${sharedKey.toList()}")
+
+                logger.d(LOG_KEY,"Sesion generada con exito")
+            } catch (e: CancellationException) {
+                logger.e(LOG_KEY,"Generacion de sesion cancelada")
+            }
         }
     }
 

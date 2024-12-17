@@ -25,7 +25,8 @@ class MainActivity : ComponentActivity() {
             launch {
                 println(App.bleUpgrade.connect(
                     "TAXI-PRUEBA1-",
-                    5000
+                    10000,
+                    listOf(UUID.fromString("4fafc201-1fb5-459e-8fcc-c5c9c331914c"))
                 ).toString())
             }
         }

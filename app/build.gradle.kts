@@ -10,6 +10,7 @@ android {
     defaultConfig {
         applicationId = "com.example.apiabstractiontest"
         minSdk = 21
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -39,11 +40,14 @@ dependencies {
     implementation(project(":supermegazinc:escentials"))
     implementation(project(":supermegazinc:ble"))
     implementation(project(":supermegazinc:ble_upgrade"))
+    implementation(project(":fulmar:tango:session"))
     implementation(libs.logger.library)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
+    implementation(project(":supermegazinc:diffie_hellman"))
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

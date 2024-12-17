@@ -46,7 +46,11 @@ class BLEDeviceCharacteristicImpl(
 
     @SuppressLint("MissingPermission")
     override suspend fun send(message: ByteArray) {
-        logger.i(LOG_KEY, "$uuid: Sending message")
+        val messageList = message.toList()
+        logger.i(LOG_KEY,
+            "$uuid: Enviando mensaje[BYT]: [${messageList.size}][${messageList.joinToString(",")}]" +
+                    "\n$uuid: Enviando mensaje[STR]: '${message.decodeToString()}'"
+        )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             bleGattController.instance.value?.writeCharacteristic(characteristic, message, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT)
         } else {
@@ -62,7 +66,11 @@ class BLEDeviceCharacteristicImpl(
                 .filterIsInstance<BLEGattEvent.Message>()
                 .filter { it.characteristic == characteristic }
                 .collect { tMessage->
-                    logger.i(LOG_KEY, "$uuid: Mensaje recibido: '${tMessage.message.toList().joinToString(",")}'")
+                    val messageList = tMessage.message.toList()
+                    logger.i(LOG_KEY,
+                        "$uuid: Mensaje recibido[BYT]: [${messageList.size}][${messageList.joinToString(",")}]" +
+                                "\n$uuid: Mensaje recibido[STR]: '${tMessage.message.decodeToString()}'"
+                    )
                     _message.update { tMessage.message }
                 }
         }

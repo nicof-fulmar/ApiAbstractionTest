@@ -171,6 +171,8 @@ class BLEGattControllerImpl(
                     }
                 }
 
+                delay(2000)
+
                 logger.i(LOG_KEY, "Iniciando sesion GATT")
                 val currentInstance = device.connectGatt(context, false, gattCallback)
                 _instance.update { currentInstance }
@@ -217,7 +219,6 @@ class BLEGattControllerImpl(
                          logger.i(LOG_KEY, tResult.event.toString())
                          delay(1000)
                          _instance.value!!.requestMtu(mtu)
-                         _instance.value!!.discoverServices()
                          Result.Success(Unit)
                      }
                      else {
