@@ -1,7 +1,7 @@
 [versions]
 agp = "8.7.3"
-bcprovJdk18on = "1.79"
 converterGson = "2.9.0"
+supermegazincBle = "2.5"
 kotlin = "1.9.24"
 coreKtx = "1.15.0"
 junit = "4.13.2"
@@ -9,22 +9,23 @@ junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 appcompat = "1.7.0"
 kotlinReflect = "1.9.23"
-logger_library = "1.6"
 material = "1.12.0"
 activityCompose = "1.9.3"
+maxVersion = "+"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
-bcpkix-jdk18on = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bcprovJdk18on" }
-bcprov-jdk18on = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bcprovJdk18on" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
+supermegazinc-logger = { module = "com.supermegazinc.libraries:logger", version.ref = "maxVersion"}
+supermegazinc-escentials = { module = "com.supermegazinc.libraries:escentials", version.ref = "maxVersion"}
+supermegazinc-ble = { module = "com.supermegazinc.libraries:ble", version.ref = "supermegazincBle" }
+
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlinReflect" }
-logger_library = { module = "com.github.supermegazinc:logger_library", version.ref = "logger_library" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 

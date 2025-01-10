@@ -13,12 +13,14 @@
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/fulmar" />
             <option value="$PROJECT_DIR$/fulmar/tango" />
+            <option value="$PROJECT_DIR$/fulmar/tango/layer1" />
             <option value="$PROJECT_DIR$/fulmar/tango/session" />
+            <option value="$PROJECT_DIR$/fulmar/tango/trama" />
             <option value="$PROJECT_DIR$/supermegazinc" />
-            <option value="$PROJECT_DIR$/supermegazinc/ble" />
             <option value="$PROJECT_DIR$/supermegazinc/ble_upgrade" />
-            <option value="$PROJECT_DIR$/supermegazinc/diffie_hellman" />
-            <option value="$PROJECT_DIR$/supermegazinc/escentials" />
+            <option value="$PROJECT_DIR$/supermegazinc/security" />
+            <option value="$PROJECT_DIR$/supermegazinc/security/cryptography" />
+            <option value="$PROJECT_DIR$/supermegazinc/security/diffie_hellman" />
           </set>
         </option>
         <option name="resolveExternalAnnotations" value="false" />

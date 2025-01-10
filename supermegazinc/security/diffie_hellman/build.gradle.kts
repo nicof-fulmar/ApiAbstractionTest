@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.supermegazinc.ble_upgrade"
+    namespace = "com.supermegazinc.security.diffie_hellman"
     compileSdk = 35
 
     defaultConfig {
@@ -22,6 +22,7 @@ android {
 }
 
 dependencies {
+
     implementation(libs.androidx.core.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -29,5 +30,6 @@ dependencies {
 
     implementation(libs.supermegazinc.escentials)
     implementation(libs.supermegazinc.logger)
-    implementation(libs.supermegazinc.ble)
+
+    implementation("org.bouncycastle:bcprov-jdk15on:1.70")
 }

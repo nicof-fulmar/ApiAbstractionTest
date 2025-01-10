@@ -23,11 +23,12 @@ class MainActivity : ComponentActivity() {
 
         CoroutineScope(Dispatchers.IO).launch {
             launch {
-                println(App.bleUpgrade.connect(
+                App.bleUpgrade.connect(
                     "TAXI-PRUEBA1-",
                     10000,
-                    listOf(UUID.fromString("4fafc201-1fb5-459e-8fcc-c5c9c331914c"))
-                ).toString())
+                    listOf(UUID.fromString("4fafc201-1fb5-459e-8fcc-c5c9c331914c")),
+                    516
+                ).toString()
             }
         }
     }

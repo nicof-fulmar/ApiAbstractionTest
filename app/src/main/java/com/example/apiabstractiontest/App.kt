@@ -1,14 +1,17 @@
 package com.example.apiabstractiontest
 
 import android.app.Application
+import com.fulmar.layer1.TangoL1Controller
+import com.fulmar.layer1.TangoL1ControllerTest
 import com.fulmar.tango.session.TangoSessionController
 import com.fulmar.tango.session.TangoSessionControllerImpl
 import com.supermegazinc.ble.BLEController
 import com.supermegazinc.ble.BLEControllerImpl
 import com.supermegazinc.ble_upgrade.BLEUpgradeController
 import com.supermegazinc.ble_upgrade.BLEUpgradeControllerImpl
-import com.supermegazinc.diffie_hellman.DiffieHellmanController
 import com.supermegazinc.logger.Logger
+import com.supermegazinc.logger.LoggerImpl
+import com.supermegazinc.security.cryptography.CryptographyController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import java.util.UUID
@@ -18,14 +21,14 @@ class App: Application() {
         lateinit var logger: Logger
         lateinit var bleController: BLEController
         lateinit var bleUpgrade: BLEUpgradeController
-        lateinit var diffieHellman: DiffieHellmanController
         lateinit var tangoSession: TangoSessionController
+        lateinit var tangoL1Controller: TangoL1ControllerTest
     }
 
     override fun onCreate() {
         super.onCreate()
 
-        logger = Logger()
+        logger = LoggerImpl()
 
         val coroutineScope = CoroutineScope(Dispatchers.IO)
 
@@ -41,15 +44,14 @@ class App: Application() {
             coroutineScope
         )
 
-        diffieHellman = DiffieHellmanController(
+        tangoSession = TangoSessionControllerImpl(
             logger
         )
 
-        tangoSession = TangoSessionControllerImpl(
+        tangoL1Controller = TangoL1ControllerTest(
             bleUpgrade,
-            UUID.fromString("beb5483e-36e1-4688-b7f5-ea07361b26a9"),
-            UUID.fromString("beb5483e-36e1-4688-b7f5-ea07361b26aa"),
-            diffieHellman,
+            tangoSession,
+            CryptographyController(logger),
             logger,
             coroutineScope
         )

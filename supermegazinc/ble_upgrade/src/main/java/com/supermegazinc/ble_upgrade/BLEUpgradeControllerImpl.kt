@@ -72,7 +72,7 @@ class BLEUpgradeControllerImpl(
         )
     }
 
-    override suspend fun connect(name: String, timeoutMillis: Long, servicesUUID: List<UUID>): Result<Unit, BLEUpgradeConnectionError> {
+    override suspend fun connect(name: String, timeoutMillis: Long, servicesUUID: List<UUID>, mtu: Int): Result<Unit, BLEUpgradeConnectionError> {
         return withContext(coroutineScope.coroutineContext) {
             logger.i(LOG_KEY, "CON - $name - Inicio")
             _status.update {
@@ -111,7 +111,7 @@ class BLEUpgradeControllerImpl(
 
             logger.d(LOG_KEY, "CON - $name - Seteando..")
 
-            val bleDevice = bleController.setDevice(scannedDevice.mac)
+            val bleDevice = bleController.setDevice(scannedDevice.mac, mtu)
             if(bleDevice==null) {
                 logger.e(LOG_KEY, "CON - $name - No se pudo setear")
                 return@withContext cancelConnect(BLEUpgradeConnectionError.DEVICE_NOT_FOUND)

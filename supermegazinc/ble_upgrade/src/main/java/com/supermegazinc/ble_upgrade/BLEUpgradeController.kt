@@ -13,7 +13,12 @@ interface BLEUpgradeController {
     val adapter: BLEAdapter
     val status: StateFlow<BLEUpgradeConnectionStatus>
     val characteristics: StateFlow<List<BLEDeviceCharacteristic>>
-    suspend fun connect(name: String, timeoutMillis: Long, servicesUUID: List<UUID>): Result<Unit, BLEUpgradeConnectionError>
-    fun disconnect()
+    suspend fun connect(
+        name: String,
+        timeoutMillis: Long,
+        servicesUUID: List<UUID>,
+        mtu: Int
+    ): Result<Unit, BLEUpgradeConnectionError>
 
+    fun disconnect()
 }

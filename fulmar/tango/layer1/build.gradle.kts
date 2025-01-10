@@ -1,20 +1,17 @@
 plugins {
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.library)
     alias(libs.plugins.jetbrains.kotlin.android)
 }
 
 android {
-    namespace = "com.example.apiabstractiontest"
+    namespace = "com.fulmar.layer1"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.apiabstractiontest"
         minSdk = 21
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles("consumer-rules.pro")
     }
 
     buildTypes {
@@ -27,37 +24,27 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
     }
 }
 
 dependencies {
 
-    implementation(libs.supermegazinc.escentials)
-
     implementation(project(":supermegazinc:ble_upgrade"))
-    implementation(project(":fulmar:tango:session"))
-    implementation(project(":fulmar:tango:layer1"))
     implementation(project(":supermegazinc:security:cryptography"))
-
+    implementation(project(":fulmar:tango:session"))
+    implementation(libs.supermegazinc.logger)
+    implementation(libs.supermegazinc.escentials)
+    implementation(libs.supermegazinc.ble)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-
-    //Permite acceder a los datos de las clases
-    implementation(libs.kotlin.reflect)
-    implementation(libs.converter.gson)
-
-    implementation(libs.supermegazinc.escentials)
-    implementation(libs.supermegazinc.logger)
-    implementation(libs.supermegazinc.ble)
 }
