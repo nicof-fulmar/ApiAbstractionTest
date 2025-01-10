@@ -44,7 +44,7 @@ class TangoSessionControllerImpl(
         }
 
         val session = TangoSession(
-            myPrivateKey = diffieHellmanController.myPrivateKey,
+            //myPrivateKey = diffieHellmanController.myPrivateKey,
             myPublicKey = diffieHellmanController.myPublicKeyBytes,
             peerPublicKey = peerPublicKey,
             sharedKey = sharedKey

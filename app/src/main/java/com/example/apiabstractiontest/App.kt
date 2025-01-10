@@ -9,6 +9,7 @@ import com.supermegazinc.ble.BLEController
 import com.supermegazinc.ble.BLEControllerImpl
 import com.supermegazinc.ble_upgrade.BLEUpgradeController
 import com.supermegazinc.ble_upgrade.BLEUpgradeControllerImpl
+import com.supermegazinc.ble_upgrade.BLEUpgradeControllerTestImpl
 import com.supermegazinc.logger.Logger
 import com.supermegazinc.logger.LoggerImpl
 import com.supermegazinc.security.cryptography.CryptographyController
@@ -44,6 +45,9 @@ class App: Application() {
             coroutineScope
         )
 
+        //bleUpgrade = BLEUpgradeControllerTestImpl(bleController)
+
+
         tangoSession = TangoSessionControllerImpl(
             logger
         )
@@ -51,7 +55,7 @@ class App: Application() {
         tangoL1Controller = TangoL1ControllerTest(
             bleUpgrade,
             tangoSession,
-            CryptographyController(logger),
+            CryptographyController(applicationContext, logger),
             logger,
             coroutineScope
         )

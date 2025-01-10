@@ -23,9 +23,6 @@ class DiffieHellmanController(
     lateinit var myPublicKeyBytes: List<Byte>
         private set
 
-    lateinit var myPrivateKey: PrivateKey
-        private set
-
     private lateinit var myKey: AsymmetricCipherKeyPair
 
     fun refreshKey() {
@@ -48,7 +45,6 @@ class DiffieHellmanController(
         val myPrivateKeyParams = myKey.private as ECPrivateKeyParameters
 
         myPublicKeyBytes = myPublicKeyParams.q.getEncoded(false).toList()
-        myPrivateKey = myKey.private as PrivateKey
     }
 
     init {
