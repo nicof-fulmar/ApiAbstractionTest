@@ -37,10 +37,6 @@ dependencyResolutionManagement {
                 password = githubProperties["gpr.key"] as String?
             }
         }
-        maven {
-            name = "MyRepo"
-            url = uri("Z:/")
-        }
     }
 }
 
