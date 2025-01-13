@@ -8,5 +8,5 @@ import kotlinx.coroutines.flow.StateFlow
 interface TangoSessionController {
     val session: StateFlow<Status<TangoSession>>
     suspend fun refreshAndGetPublicKey(): List<Byte>
-    suspend fun generateSession(peerPublicKey: List<Byte>): Result<TangoSession, Unit>
+    suspend fun generateSession(peerPublicKey: List<Byte>): TangoSession?
 }

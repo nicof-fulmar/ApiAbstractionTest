@@ -60,11 +60,16 @@ class CryptographyController(
         }
     }
 
-    fun sign(msg: ByteArray): ByteArray {
-        val signature = Signature.getInstance("SHA256withRSA")
-        signature.initSign(privateKey)
-        signature.update(msg)
-        return signature.sign()
+    fun sign(msg: ByteArray): ByteArray? {
+        return try {
+            val signature = Signature.getInstance("SHA256withRSA")
+            signature.initSign(privateKey)
+            signature.update(msg)
+            signature.sign()
+        } catch (_: Exception) {
+            null
+        }
+
     }
 
     private fun publicKeyToHex(publicKey: PublicKey?): String {

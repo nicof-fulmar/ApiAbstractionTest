@@ -45,7 +45,16 @@ class TangoL1ControllerTest(
             try {
                 logger.i(LOG_KEY,"Generando sesion..")
 
-                val publicKey = tangoSessionController.refreshAndGetPublicKey()
+                val publicKey = tangoSessionController.refreshAndGetPublicKey().toByteArray()
+
+                val publicKeySigned = cryptographyController.sign(publicKey)
+
+                if(publicKeySigned == null) {
+                    logger.e(LOG_KEY, "No se pudo firmar la clave publica")
+                    return@launch
+                }
+
+                val publicKeySignedFull = publicKey + publicKeySigned
 
                 logger.d(LOG_KEY,"Buscando caracteristica 'SendPublicKey'..")
                 val sendCharacteristic = bleUpgradeController
@@ -55,7 +64,7 @@ class TangoL1ControllerTest(
                     .firstWithTimeout(5000)
                 logger.d(LOG_KEY,"Encontrada, enviando clave publica: [${publicKey.size}]: $publicKey")
 
-                sendCharacteristic.send(publicKey.toByteArray())
+                sendCharacteristic.send(publicKeySignedFull)
 
                 logger.d(LOG_KEY,"Buscando caracteristica 'ReceivePublicKey'..")
                 val receiveCharacteristic = bleUpgradeController
@@ -69,21 +78,17 @@ class TangoL1ControllerTest(
                 val peerPublicKey = receiveCharacteristic.message
                     .filterNotNull()
                     .firstWithTimeout(5000)
-                    .toList()
                 logger.d(LOG_KEY,"Encontrada, clave recibida: [${peerPublicKey.size}]: ${peerPublicKey.toList()}")
 
                 logger.d(LOG_KEY,"Calculando clave compartida..")
-                when(val session = tangoSessionController.generateSession(peerPublicKey)) {
-                    is Result.Fail -> {
-                        logger.e(LOG_KEY,"No se pudo calcular la clave compartida")
-                        return@launch
-                    }
-                    is Result.Success -> {
-                        logger.d(LOG_KEY,"Clave compartida: [${session.data.sharedKey.size}]: ${session.data.sharedKey.toList()}")
-                        logger.d(LOG_KEY,"Sesion generada con exito")
-                        return@launch
-                    }
+
+                val session = tangoSessionController.generateSession(peerPublicKey.copyOfRange(0,65).toList())
+
+                if(session==null) {
+                    logger.e(LOG_KEY, "No se pudo calcular la clave compartida")
+                    return@launch
                 }
+
             } catch (e: TimeoutCancellationException) {
                 logger.e(LOG_KEY, "Timeout")
             }

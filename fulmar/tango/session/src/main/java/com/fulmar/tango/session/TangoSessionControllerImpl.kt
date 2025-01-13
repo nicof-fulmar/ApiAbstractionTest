@@ -31,16 +31,17 @@ class TangoSessionControllerImpl(
 
     override suspend fun refreshAndGetPublicKey(): List<Byte> {
         logger.d(LOG_KEY,"Actualizando y obteniendo clave publica..")
+        _session.update { Status.None() }
         diffieHellmanController.refreshKey()
         return diffieHellmanController.myPublicKeyBytes
     }
 
-    override suspend fun generateSession(peerPublicKey: List<Byte>): Result<TangoSession, Unit> {
+    override suspend fun generateSession(peerPublicKey: List<Byte>): TangoSession? {
         logger.d(LOG_KEY,"[GEN_SES] - Generando sesion..")
         _session.update { Status.None() }
         val sharedKey = diffieHellmanController.sharedKey(peerPublicKey) ?: run {
             logger.e(LOG_KEY,"[GEN_SES] - No se pudo obtener la clave compartida")
-            return Result.Fail(Unit)
+            return null
         }
 
         val session = TangoSession(
@@ -52,7 +53,7 @@ class TangoSessionControllerImpl(
 
         logger.i(LOG_KEY,"[GEN_SES] - Sesion generada")
         _session.update { Status.Ready(session) }
-        return Result.Success(session)
+        return session
     }
 
     /*
