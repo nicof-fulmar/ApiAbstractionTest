@@ -96,6 +96,8 @@ class TangoL1ControllerTest(
                     return@launch
                 }
 
+                logger.i(LOG_KEY,"Sesion generada con exito - Comenzando a desencriptar")
+
             } catch (e: TimeoutCancellationException) {
                 logger.e(LOG_KEY, "Timeout")
             }
@@ -134,15 +136,8 @@ class TangoL1ControllerTest(
                                     .filterNotNull()
                                     .collect { incomingMsg->
 
-                                        logger.d(LOG_KEY, "1. Mensaje recibido")
-                                        logger.d(LOG_KEY, "2. Verificando firma..")
-                                        /*
-                                         cryptographyController.verifyPublicKeySignature(
-                                            incomingMsg,
-
-                                        )
-                                         */
-                                        logger.d(LOG_KEY, "3. Desencriptando..")
+                                        logger.d(LOG_KEY, "Mensaje recibido")
+                                        logger.d(LOG_KEY, "Desencriptando..")
                                         val shared = (tangoSessionController.session.first() as? Status.Ready)?.data?.sharedKey
                                         if(shared == null) {
                                             logger.e(LOG_KEY, "No hay una sesion en curso")
