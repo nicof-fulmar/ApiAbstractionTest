@@ -80,6 +80,13 @@ class TangoL1ControllerTest(
                     .firstWithTimeout(5000)
                 logger.d(LOG_KEY,"Encontrada, clave recibida: [${peerPublicKey.size}]: ${peerPublicKey.toList()}")
 
+                if(!cryptographyController.verifyPublicKeySignature(peerPublicKey.copyOfRange(0,65),peerPublicKey.copyOfRange(65,65+256))) {
+                    logger.e(LOG_KEY, "Verificacion de clave publica fallida")
+                    return@launch
+                } else {
+                    logger.d(LOG_KEY, "Verificacion de clave publica correcta")
+                }
+
                 logger.d(LOG_KEY,"Calculando clave compartida..")
 
                 val session = tangoSessionController.generateSession(peerPublicKey.copyOfRange(0,65).toList())
