@@ -43,7 +43,6 @@ dependencyResolutionManagement {
 rootProject.name = "ApiAbstractionTest"
 include(":app")
 include(":supermegazinc:ble_upgrade")
-include(":supermegazinc:ble")
 include(":fulmar:tango:session")
 include(":supermegazinc:security:diffie_hellman")
 include(":supermegazinc:security:cryptography")

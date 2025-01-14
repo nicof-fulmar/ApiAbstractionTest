@@ -39,7 +39,7 @@ dependencies {
     implementation(project(":fulmar:tango:session"))
     implementation(libs.supermegazinc.logger)
     implementation(libs.supermegazinc.escentials)
-    implementation(project(":supermegazinc:ble"))
+    implementation(libs.supermegazinc.ble)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
