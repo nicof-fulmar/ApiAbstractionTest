@@ -56,16 +56,6 @@ class TangoL1ControllerTest(
 
                 val publicKeySignedFull = publicKey + publicKeySigned
 
-                logger.d(LOG_KEY,"Buscando caracteristica 'SendPublicKey'..")
-                val sendCharacteristic = bleUpgradeController
-                    .characteristics
-                    .mapNotNull { it.firstOrNull {char-> UUID.fromString("beb5483e-36e1-4688-b7f5-ea07361b26aa") == char.uuid} }
-                    .filterNotNull()
-                    .firstWithTimeout(5000)
-                logger.d(LOG_KEY,"Encontrada, enviando clave publica: [${publicKey.size}]: $publicKey")
-
-                sendCharacteristic.send(publicKeySignedFull)
-
                 logger.d(LOG_KEY,"Buscando caracteristica 'ReceivePublicKey'..")
                 val receiveCharacteristic = bleUpgradeController
                     .characteristics
@@ -86,6 +76,16 @@ class TangoL1ControllerTest(
                 } else {
                     logger.d(LOG_KEY, "Verificacion de clave publica correcta")
                 }
+
+                logger.d(LOG_KEY,"Buscando caracteristica 'SendPublicKey'..")
+                val sendCharacteristic = bleUpgradeController
+                    .characteristics
+                    .mapNotNull { it.firstOrNull {char-> UUID.fromString("beb5483e-36e1-4688-b7f5-ea07361b26aa") == char.uuid} }
+                    .filterNotNull()
+                    .firstWithTimeout(5000)
+                logger.d(LOG_KEY,"Encontrada, enviando clave publica: [${publicKey.size}]: $publicKey")
+
+                sendCharacteristic.send(publicKeySignedFull)
 
                 logger.d(LOG_KEY,"Calculando clave compartida..")
 
