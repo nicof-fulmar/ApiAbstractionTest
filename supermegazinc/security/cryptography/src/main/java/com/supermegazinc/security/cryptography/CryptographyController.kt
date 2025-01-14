@@ -98,16 +98,16 @@ class CryptographyController(
         return try {
 
             //val publicKeyDataFormat = publicKeyData.toPositiveValues()
-            logger.i("criptografia","publicKeyData ${publicKeyData.toHexString()}")
+            logger.i(LOG_KEY,"publicKeyData ${publicKeyData.toHexString()}")
             //val signatureFormat = signature.toPositiveValues()
-            logger.i("criptografia","signature ${signature.toHexString()}")
+            logger.i(LOG_KEY,"signature ${signature.toHexString()}")
 
             val privateKeyHex = privateKeyToHex(privateKey)
-            logger.i("criptografia","privateKey $privateKeyHex")
+            logger.i(LOG_KEY,"privateKey $privateKeyHex")
 
             val publicKey = derivePublicKeyFromPrivateKey() ?: error("No se pudo derivar la clave pública")
             val publicKeyHex = publicKeyToHex(publicKey)
-            logger.i("criptografia","publicKey $publicKeyHex")
+            logger.i(LOG_KEY,"publicKey $publicKeyHex")
 
             val signatureAlg = Signature.getInstance("SHA256withRSA")
             signatureAlg.initVerify(publicKey)
