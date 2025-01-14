@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -160,10 +161,14 @@ class BLEUpgradeControllerImpl(
             logger.d(LOG_KEY, "OBS - Observando conexion")
             coroutineScope {
                 bleController.device.collectLatest { tDevice->
-                    tDevice?.status?.map{if(it is BLEDeviceStatus.Disconnected) true else null}?.distinctUntilChanged()?.filterNotNull()?.collectLatest {_->
-                        logger.e(LOG_KEY, "OBS - Desconexion detectada! Intentando reconectar..")
-                        reconnect(tDevice)
-                    }
+                    tDevice
+                        ?.status
+                        ?.filterIsInstance<BLEDeviceStatus.Disconnected>()
+                        ?.distinctUntilChanged()
+                        ?.collectLatest {_->
+                            logger.e(LOG_KEY, "OBS - Desconexion detectada! Intentando reconectar..")
+                            reconnect(tDevice)
+                        }
                 }
             }
         }
