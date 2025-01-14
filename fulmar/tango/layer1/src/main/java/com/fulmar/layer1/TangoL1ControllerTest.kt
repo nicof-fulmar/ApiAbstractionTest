@@ -131,6 +131,8 @@ class TangoL1ControllerTest(
                                 }
                             }.collectLatest { characteristic->
 
+                                characteristic.setNotification(true)
+
                                 characteristic
                                     .message
                                     .filterNotNull()
