@@ -19,7 +19,7 @@ androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = 
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 supermegazinc-logger = { module = "com.supermegazinc.libraries:logger", version.ref = "maxVersion"}
 supermegazinc-escentials = { module = "com.supermegazinc.libraries:escentials", version.ref = "escentials"}
-supermegazinc-ble = { module = "com.supermegazinc.libraries:ble", version.ref = "supermegazincBle" }
+#supermegazinc-ble = { module = "com.supermegazinc.libraries:ble", version.ref = "supermegazincBle" }
 
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }

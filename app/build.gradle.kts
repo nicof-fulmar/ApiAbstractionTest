@@ -59,5 +59,5 @@ dependencies {
 
     implementation(libs.supermegazinc.escentials)
     implementation(libs.supermegazinc.logger)
-    implementation(libs.supermegazinc.ble)
+    implementation(project(":supermegazinc:ble"))
 }
