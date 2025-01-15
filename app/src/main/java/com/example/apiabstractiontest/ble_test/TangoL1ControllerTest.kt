@@ -3,6 +3,7 @@ package com.example.apiabstractiontest.ble_test
 import com.fulmar.layer1.service.tangoL1SessionService
 import com.fulmar.tango.session.TangoSessionController
 import com.supermegazinc.ble_upgrade.BLEUpgradeController
+import com.supermegazinc.ble_upgrade.model.BLEUpgradeConnectionStatus
 import com.supermegazinc.escentials.Status
 import com.supermegazinc.escentials.firstWithTimeout
 import com.supermegazinc.logger.Logger
@@ -24,6 +25,7 @@ class TangoL1ControllerTest(
     private val bleUpgradeController: BLEUpgradeController,
     private val tangoSessionController: TangoSessionController,
     private val cryptographyController: CryptographyController,
+    private val testSuite: BLETestSuite,
     private val logger: Logger,
     private val coroutineScope: CoroutineScope,
 ) {
@@ -115,6 +117,32 @@ class TangoL1ControllerTest(
                 }
             )
         }
+
+        /*
+        coroutineScope.launch {
+            coroutineScope {
+                bleUpgradeController
+                    .status
+                    .collectLatest { status->
+                        delay(9000)
+                        testSuite.triggerConnectionLost()
+
+                        /*
+                        launch {
+                            if(status is BLEUpgradeConnectionStatus.Connected) {
+                                delay(500)
+                                testSuite.triggerAdapterOff()
+                                delay(2000)
+                                testSuite.triggerAdapterOn()
+                            }
+                        }
+
+                         */
+                    }
+            }
+        }
+
+         */
 
         coroutineScope.launch {
             coroutineScope {

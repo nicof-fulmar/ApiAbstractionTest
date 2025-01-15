@@ -37,6 +37,7 @@ class BLEControllerTestImpl(
             mac,
             name,
             adapter,
+            testSuite,
             coroutineScope
         )
         _device.update { device }

@@ -17,12 +17,27 @@ class BLETestSuite(
         const val LOG_KEY = "TEST-SUITE"
     }
 
-    private val _adapterOff = MutableSharedFlow<Unit>()
-    val adapterOff = _adapterOff.asSharedFlow()
+    val adapterOff = MutableSharedFlow<Unit>()
     fun triggerAdapterOff() {
         coroutineScope.launch {
             logger.i(LOG_KEY, "triggerAdapterOff")
-            _adapterOff.emit(Unit)
+            adapterOff.emit(Unit)
+        }
+    }
+
+    val adapterOn = MutableSharedFlow<Unit>()
+    fun triggerAdapterOn() {
+        coroutineScope.launch {
+            logger.i(LOG_KEY, "triggerAdapterOn")
+            adapterOff.emit(Unit)
+        }
+    }
+
+    val connectionLost = MutableSharedFlow<Unit>()
+    fun triggerConnectionLost() {
+        coroutineScope.launch {
+            logger.i(LOG_KEY, "triggerConnectionLost")
+            connectionLost.emit(Unit)
         }
     }
 

@@ -13,16 +13,24 @@ import com.supermegazinc.ble.gatt.model.BLEGattConnectError
 import com.supermegazinc.escentials.Result
 import com.supermegazinc.escentials.Status
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -30,6 +38,7 @@ class BLEDeviceTestImpl(
     private val _mac: String,
     private val _name: String,
     private val adapter: BLEAdapter,
+    private val testSuite: BLETestSuite,
     private val coroutineScope: CoroutineScope
 ): BLEDevice {
 
@@ -56,25 +65,35 @@ class BLEDeviceTestImpl(
     }
 
     private fun clear() {
+        connectJob?.cancel()
         _characteristics.update { emptyList() }
         _services.update { emptyList() }
     }
 
-    private var connectScope: CoroutineScope? = null
+    private var connectJob: Job? = null
     override suspend fun connect(): Result<Unit, BLEGattConnectError> {
-        connectScope?.cancel()
-        connectScope = CoroutineScope(coroutineScope.coroutineContext)
-        return withContext(connectScope!!.coroutineContext) {
-            try {
+        connectJob?.cancel()
+        connectJob = Job(coroutineScope.coroutineContext.job)
+
+        return try {
+
+            withContext(coroutineScope.coroutineContext + connectJob!!) {
+
                 val adapterState = adapter.state.value
-                if(adapterState !is Status.Ready || adapterState.data != BLEAdapterState.ON) return@withContext Result.Fail<Unit, BLEGattConnectError>(BLEGattConnectError.CANT_CONNECT)
+                if (adapterState !is Status.Ready || adapterState.data != BLEAdapterState.ON) {
+                    return@withContext Result.Fail<Unit, BLEGattConnectError>(
+                        BLEGattConnectError.CANT_CONNECT
+                    )
+                }
 
                 delay(5000)
+
                 _services.update {
                     listOf(
                         BLEDeviceServiceTestImpl(BLETestK.SERVICE_MAIN_UUID)
                     )
                 }
+
                 _characteristics.update {
                     listOf(
                         BLEDeviceCharacteristicTestImpl(
@@ -94,12 +113,13 @@ class BLEDeviceTestImpl(
                         ),
                     )
                 }
-                return@withContext Result.Success<Unit, BLEGattConnectError>(Unit)
 
-            } catch (e: CancellationException) {
-                Log.e(LOG_KEY, "Conexion cancelada")
-                return@withContext Result.Fail<Unit, BLEGattConnectError>(BLEGattConnectError.CANCELED)
+                _status.update { BLEDeviceStatus.Connected }
+                return@withContext Result.Success(Unit)
             }
+        } catch (e: CancellationException) {
+            Log.e(LOG_KEY, "Conexion cancelada")
+            return Result.Fail<Unit, BLEGattConnectError>(BLEGattConnectError.CANCELED)
         }
     }
 
@@ -109,20 +129,31 @@ class BLEDeviceTestImpl(
     }
 
     private suspend fun observeAdapter() {
-        adapter.state
-            .filterIsInstance<Status.Ready<BLEAdapterState>>()
-            .filter { it.data != BLEAdapterState.ON }
-            .distinctUntilChanged()
-            .collect {
-                clear()
-                Log.e("TEST-BLE-DEVICE", "Adaptador desconectado")
-                _status.update { BLEDeviceStatus.Disconnected(BLEDisconnectionReason.CONNECTION_LOST) }
+        coroutineScope {
+            _status.collectLatest { tStatus->
+                if(tStatus !is BLEDeviceStatus.Disconnected) {
+                    adapter.state
+                        .filterIsInstance<Status.Ready<BLEAdapterState>>()
+                        .filter { it.data != BLEAdapterState.ON }
+                        .collect {
+                            Log.e("TEST-BLE-DEVICE", "Adaptador desconectado")
+                            clear()
+                            _status.update { BLEDeviceStatus.Disconnected(BLEDisconnectionReason.CONNECTION_LOST) }
+                        }
+                }
             }
+        }
     }
 
     init {
         coroutineScope.launch {
             observeAdapter()
+        }
+        coroutineScope.launch {
+            testSuite.connectionLost.collect {
+                clear()
+                _status.update { BLEDeviceStatus.Disconnected(BLEDisconnectionReason.CONNECTION_LOST) }
+            }
         }
     }
 }

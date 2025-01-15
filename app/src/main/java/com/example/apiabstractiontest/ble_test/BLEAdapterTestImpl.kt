@@ -34,6 +34,7 @@ class BLEAdapterTestImpl(
             address,
             name,
             this,
+            testSuite,
             coroutineScope
         )
     }
@@ -46,6 +47,11 @@ class BLEAdapterTestImpl(
         coroutineScope.launch {
             testSuite.adapterOff.collectLatest {
                 _state.update { Status.Ready(BLEAdapterState.OFF) }
+            }
+        }
+        coroutineScope.launch {
+            testSuite.adapterOn.collectLatest {
+                _state.update { Status.Ready(BLEAdapterState.ON) }
             }
         }
     }
