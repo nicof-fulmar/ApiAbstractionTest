@@ -2,20 +2,11 @@ package com.example.apiabstractiontest
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import com.example.apiabstractiontest.ble_test.BLETestK
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 class MainActivity : ComponentActivity() {
 
@@ -23,18 +14,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         CoroutineScope(Dispatchers.IO).launch {
-            launch {
-                App.bleUpgrade.connect(
-                    "TAXI-PRUEBA1-",
-                    10000,
-                    listOf(UUID.fromString("4fafc201-1fb5-459e-8fcc-c5c9c331914c")),
-                    516
-                ).toString()
-            }
-            launch {
-                delay(2000)
-                App.bleUpgrade.disconnect()
-            }
+            App.bleUpgrade.connect(
+                BLETestK.TANGO_BLE_NAME,
+                10000,
+                listOf(BLETestK.SERVICE_MAIN_UUID),
+                516
+            ).toString()
         }
     }
 }

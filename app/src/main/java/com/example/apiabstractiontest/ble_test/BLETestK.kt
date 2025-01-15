@@ -2,7 +2,7 @@ package com.example.apiabstractiontest.ble_test
 
 import java.util.UUID
 
-object UUIDs {
+object BLETestK {
     const val TANGO_BLE_NAME = "TAXI-PRUEBA1-"
     val SERVICE_MAIN_UUID: UUID = UUID.fromString("4fafc201-1fb5-459e-8fcc-c5c9c331914c")
     val CHARACTERISTIC_RECEIVE_KEY_UUID: UUID = UUID.fromString("beb5483e-36e1-4688-b7f5-ea07361b26a9")

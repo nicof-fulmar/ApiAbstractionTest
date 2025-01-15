@@ -8,7 +8,6 @@ import com.supermegazinc.ble.device.BLEDeviceImpl.Companion.LOG_KEY
 import com.supermegazinc.ble.device.characteristic.BLEDeviceCharacteristic
 import com.supermegazinc.ble.device.model.BLEDeviceStatus
 import com.supermegazinc.ble.device.service.BLEDeviceService
-import com.supermegazinc.ble.device.service.BLEDeviceServiceImpl
 import com.supermegazinc.ble.gatt.model.BLEDisconnectionReason
 import com.supermegazinc.ble.gatt.model.BLEGattConnectError
 import com.supermegazinc.escentials.Result
@@ -25,7 +24,6 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
 
 class BLEDeviceTestImpl(
@@ -74,23 +72,23 @@ class BLEDeviceTestImpl(
                 delay(5000)
                 _services.update {
                     listOf(
-                        BLEDeviceServiceTestImpl(UUIDs.SERVICE_MAIN_UUID)
+                        BLEDeviceServiceTestImpl(BLETestK.SERVICE_MAIN_UUID)
                     )
                 }
                 _characteristics.update {
                     listOf(
                         BLEDeviceCharacteristicTestImpl(
-                            UUIDs.CHARACTERISTIC_RECEIVE_KEY_UUID,
-                            UUIDs.TANGO_PUBLIC_KEY,
+                            BLETestK.CHARACTERISTIC_RECEIVE_KEY_UUID,
+                            BLETestK.TANGO_PUBLIC_KEY,
                             coroutineScope
                         ),
                         BLEDeviceCharacteristicTestImpl(
-                            UUIDs.CHARACTERISTIC_SEND_KEY_UUID,
+                            BLETestK.CHARACTERISTIC_SEND_KEY_UUID,
                             null,
                             coroutineScope
                         ),
                         BLEDeviceCharacteristicTestImpl(
-                            UUIDs.CHARACTERISTIC_RECEIVE_TELEMETRY_UUID,
+                            BLETestK.CHARACTERISTIC_RECEIVE_TELEMETRY_UUID,
                             null,
                             coroutineScope
                         ),

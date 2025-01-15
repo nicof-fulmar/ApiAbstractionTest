@@ -1,9 +1,6 @@
 package com.example.apiabstractiontest
 
 import android.app.Application
-import com.example.apiabstractiontest.ble_test.BLEControllerTestImpl
-import com.example.apiabstractiontest.ble_test.BLETestSuite
-import com.example.apiabstractiontest.ble_test.UUIDs
 import com.example.apiabstractiontest.ble_test.TangoL1ControllerTest
 import com.fulmar.tango.session.TangoSessionController
 import com.fulmar.tango.session.TangoSessionControllerImpl
