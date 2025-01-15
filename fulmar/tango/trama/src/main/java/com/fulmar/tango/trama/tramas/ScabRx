@@ -1,0 +1,8 @@
+< open
+RCABFM-VDT
+1byte
+1Byte caracter estado
+1Byte numero de tarifa
+1Byte numero de paquete
+1Byte checksum
+> close
