@@ -68,7 +68,11 @@ class DiffieHellmanController(
             agreement.init(myPrivateKeyParams)
 
             val sharedSecret = agreement.calculateAgreement(peerPublicKeyParams)
-            sharedSecret.toByteArray().toList()
+            sharedSecret.toByteArray().apply {
+                if(this[0] == 0.toByte()) {
+                    drop(1)
+                }
+            }.toList()
         } catch (_: Exception) {
             logger.e(LOG_KEY, "ERROR al calcular clave compartida")
             null
