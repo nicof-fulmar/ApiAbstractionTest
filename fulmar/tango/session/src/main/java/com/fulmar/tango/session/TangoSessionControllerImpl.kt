@@ -45,7 +45,6 @@ class TangoSessionControllerImpl(
         }
 
         val session = TangoSession(
-            //myPrivateKey = diffieHellmanController.myPrivateKey,
             myPublicKey = diffieHellmanController.myPublicKeyBytes,
             peerPublicKey = peerPublicKey,
             sharedKey = sharedKey
@@ -55,38 +54,4 @@ class TangoSessionControllerImpl(
         _session.update { Status.Ready(session) }
         return session
     }
-
-    /*
-        override suspend fun generateSession(): Result<TangoSession, Unit> {
-
-        logger.d(LOG_KEY,"Buscando caracteristica 'SendPublicKey'..")
-        val sendCharacteristic = bleUpgradeController
-            .characteristics
-            .map { it.firstOrNull {char-> sendPublicKeyCharacteristicUUID == char.uuid} }
-            .filterNotNull()
-            .first()
-        logger.d(LOG_KEY,"Encontrada, enviando clave publica: [${diffieHellmanController.myPublicKeyBytes.size}]: ${diffieHellmanController.myPublicKeyBytes.toList()}")
-
-        sendCharacteristic.send(diffieHellmanController.myPublicKeyBytes.toByteArray())
-
-        logger.d(LOG_KEY,"Buscando caracteristica 'ReceivePublicKey'..")
-        val receiveCharacteristic = bleUpgradeController
-            .characteristics
-            .map { it.firstOrNull {char-> receivePublicKeyCharacteristicUUID == char.uuid} }
-            .filterNotNull()
-            .first()
-        receiveCharacteristic.forceRead()
-        val peerPublicKey = receiveCharacteristic.message.filterNotNull().first().toList()
-        logger.d(LOG_KEY,"Encontrada, clave recibida: [${peerPublicKey.size}]: ${peerPublicKey.toList()}")
-
-        val sharedKey = diffieHellmanController.sharedKey(peerPublicKey) ?: return Result.Fail(Unit)
-
-        logger.d(LOG_KEY,"Clave compartida: [${sharedKey.size}]: ${sharedKey.toList()}")
-
-        logger.d(LOG_KEY,"Sesion generada con exito")
-
-
-    }
-     */
-
 }

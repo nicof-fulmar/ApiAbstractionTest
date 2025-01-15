@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -29,6 +30,10 @@ class MainActivity : ComponentActivity() {
                     listOf(UUID.fromString("4fafc201-1fb5-459e-8fcc-c5c9c331914c")),
                     516
                 ).toString()
+            }
+            launch {
+                delay(2000)
+                App.bleUpgrade.disconnect()
             }
         }
     }

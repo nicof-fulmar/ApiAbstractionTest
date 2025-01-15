@@ -1,21 +1,21 @@
 package com.example.apiabstractiontest
 
 import android.app.Application
-import com.fulmar.layer1.TangoL1Controller
-import com.fulmar.layer1.TangoL1ControllerTest
+import com.example.apiabstractiontest.ble_test.BLEControllerTestImpl
+import com.example.apiabstractiontest.ble_test.BLETestSuite
+import com.example.apiabstractiontest.ble_test.UUIDs
+import com.example.apiabstractiontest.ble_test.TangoL1ControllerTest
 import com.fulmar.tango.session.TangoSessionController
 import com.fulmar.tango.session.TangoSessionControllerImpl
 import com.supermegazinc.ble.BLEController
 import com.supermegazinc.ble.BLEControllerImpl
 import com.supermegazinc.ble_upgrade.BLEUpgradeController
 import com.supermegazinc.ble_upgrade.BLEUpgradeControllerImpl
-import com.supermegazinc.ble_upgrade.BLEUpgradeControllerTestImpl
 import com.supermegazinc.logger.Logger
 import com.supermegazinc.logger.LoggerImpl
 import com.supermegazinc.security.cryptography.CryptographyController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import java.util.UUID
 
 class App: Application() {
     companion object {
@@ -39,14 +39,21 @@ class App: Application() {
             coroutineScope = coroutineScope
         )
 
+        //val bleTestSuite = BLETestSuite(logger,coroutineScope)
+
+
+        /*bleController = BLEControllerTestImpl(
+            name = UUIDs.TANGO_BLE_NAME,
+            bleTestSuite,
+            coroutineScope
+        )
+         */
+
         bleUpgrade = BLEUpgradeControllerImpl(
             bleController,
             logger = logger,
             coroutineScope
         )
-
-        //bleUpgrade = BLEUpgradeControllerTestImpl(bleController)
-
 
         tangoSession = TangoSessionControllerImpl(
             logger

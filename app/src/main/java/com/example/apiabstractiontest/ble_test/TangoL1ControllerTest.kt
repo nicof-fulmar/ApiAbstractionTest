@@ -1,24 +1,18 @@
-package com.fulmar.layer1
+package com.example.apiabstractiontest.ble_test
 
 import com.fulmar.layer1.service.tangoL1SessionService
 import com.fulmar.tango.session.TangoSessionController
 import com.supermegazinc.ble_upgrade.BLEUpgradeController
-import com.supermegazinc.ble_upgrade.model.BLEUpgradeConnectionStatus
-import com.supermegazinc.escentials.Result
 import com.supermegazinc.escentials.Status
 import com.supermegazinc.escentials.firstWithTimeout
-import com.supermegazinc.escentials.waitForNextWithTimeout
 import com.supermegazinc.logger.Logger
 import com.supermegazinc.security.cryptography.CryptographyController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -68,7 +62,7 @@ class TangoL1ControllerTest(
                 val peerPublicKey = receiveCharacteristic.message
                     .filterNotNull()
                     .firstWithTimeout(5000)
-                logger.d(LOG_KEY,"Encontrada, clave recibida: [${peerPublicKey.size}]: ${peerPublicKey.toList()}")
+                logger.d(LOG_KEY,"Encontrada, clave recibida [${peerPublicKey.size}]: ${peerPublicKey.toList()}")
 
                 if(!cryptographyController.verifyPublicKeySignature(peerPublicKey.copyOfRange(0,65),peerPublicKey.copyOfRange(65,65+256))) {
                     logger.e(LOG_KEY, "Verificacion de clave publica fallida")
@@ -83,7 +77,7 @@ class TangoL1ControllerTest(
                     .mapNotNull { it.firstOrNull {char-> UUID.fromString("beb5483e-36e1-4688-b7f5-ea07361b26aa") == char.uuid} }
                     .filterNotNull()
                     .firstWithTimeout(5000)
-                logger.d(LOG_KEY,"Encontrada, enviando clave publica: [${publicKey.size}]: $publicKey")
+                logger.d(LOG_KEY,"Encontrada, enviando clave publica [${publicKey.size}]: ${publicKey.toList()}")
 
                 sendCharacteristic.send(publicKeySignedFull)
 
@@ -96,7 +90,11 @@ class TangoL1ControllerTest(
                     return@launch
                 }
 
-                logger.i(LOG_KEY,"Sesion generada con exito - Comenzando a desencriptar")
+                logger.i(LOG_KEY,"Sesion generada con exito\n" +
+                        "PUBLIC[${session.myPublicKey.size}]: ${session.myPublicKey}\n" +
+                        "SHARED[${session.sharedKey.size}]: ${session.sharedKey}"
+                        )
+
 
             } catch (e: TimeoutCancellationException) {
                 logger.e(LOG_KEY, "Timeout")
@@ -105,6 +103,7 @@ class TangoL1ControllerTest(
     }
 
     init {
+
         coroutineScope.launch {
             tangoL1SessionService(
                 connectionStatus = bleUpgradeController.status,
@@ -140,7 +139,7 @@ class TangoL1ControllerTest(
 
                                         logger.d(LOG_KEY, "Mensaje recibido")
                                         logger.d(LOG_KEY, "Desencriptando..")
-                                        val shared = (tangoSessionController.session.first() as? Status.Ready)?.data?.sharedKey
+                                        val shared = (tangoSessionController.session.value as? Status.Ready)?.data?.sharedKey
                                         if(shared == null) {
                                             logger.e(LOG_KEY, "No hay una sesion en curso")
                                             return@collect
@@ -156,7 +155,8 @@ class TangoL1ControllerTest(
                                             return@collect
                                         }
 
-                                        logger.i(LOG_KEY, "Desencriptado[BYT]: ${decrypted.toList()} + " +
+                                        logger.i(
+                                            LOG_KEY, "Desencriptado[BYT]: ${decrypted.toList()} + " +
                                                 "\nDesencriptado[STR]: ${decrypted.decodeToString()}")
                                     }
                             }

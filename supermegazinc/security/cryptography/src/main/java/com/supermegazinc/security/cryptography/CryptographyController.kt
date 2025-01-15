@@ -55,7 +55,7 @@ class CryptographyController(
             cipher.init(Cipher.DECRYPT_MODE, secretKey, IvParameterSpec(iv))
             cipher.doFinal(encryptedData)
         } catch (e: Exception) {
-            logger.e(LOG_KEY, "Error al desencriptar: + ${e.message}")
+            logger.e(LOG_KEY, "Error al desencriptar: ${e.message}")
             null
         }
     }
@@ -96,19 +96,7 @@ class CryptographyController(
         signature: ByteArray
     ): Boolean {
         return try {
-
-            //val publicKeyDataFormat = publicKeyData.toPositiveValues()
-            logger.i(LOG_KEY,"publicKeyData ${publicKeyData.toHexString()}")
-            //val signatureFormat = signature.toPositiveValues()
-            logger.i(LOG_KEY,"signature ${signature.toHexString()}")
-
-            val privateKeyHex = privateKeyToHex(privateKey)
-            logger.i(LOG_KEY,"privateKey $privateKeyHex")
-
             val publicKey = derivePublicKeyFromPrivateKey() ?: error("No se pudo derivar la clave pública")
-            val publicKeyHex = publicKeyToHex(publicKey)
-            logger.i(LOG_KEY,"publicKey $publicKeyHex")
-
             val signatureAlg = Signature.getInstance("SHA256withRSA")
             signatureAlg.initVerify(publicKey)
             signatureAlg.update(publicKeyData)

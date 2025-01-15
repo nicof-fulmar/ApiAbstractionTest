@@ -42,13 +42,8 @@ class DiffieHellmanController(
 
         myKey = keyPairGenerator.generateKeyPair()
         val myPublicKeyParams = myKey.public as ECPublicKeyParameters
-        val myPrivateKeyParams = myKey.private as ECPrivateKeyParameters
 
         myPublicKeyBytes = myPublicKeyParams.q.getEncoded(false).toList()
-    }
-
-    init {
-        refreshKey()
     }
 
 
@@ -78,6 +73,10 @@ class DiffieHellmanController(
             logger.e(LOG_KEY, "ERROR al calcular clave compartida")
             null
         }
+    }
+
+    init {
+        refreshKey()
     }
 
 }

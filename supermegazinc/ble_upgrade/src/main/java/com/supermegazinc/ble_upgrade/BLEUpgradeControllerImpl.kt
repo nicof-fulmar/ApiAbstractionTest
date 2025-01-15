@@ -164,6 +164,7 @@ class BLEUpgradeControllerImpl(
                     tDevice
                         ?.status
                         ?.filterIsInstance<BLEDeviceStatus.Disconnected>()
+                        ?.filter { it.reason != BLEDisconnectionReason.DISCONNECTED }
                         ?.distinctUntilChanged()
                         ?.collectLatest {_->
                             logger.e(LOG_KEY, "OBS - Desconexion detectada! Intentando reconectar..")
@@ -220,6 +221,7 @@ class BLEUpgradeControllerImpl(
 
     private fun clear() {
         observeConnectionJob?.cancel()
+        reconnectJob?.cancel()
         bleController.scanner.stop()
         bleController.scanner.clear()
         bleController.clearDevice()
