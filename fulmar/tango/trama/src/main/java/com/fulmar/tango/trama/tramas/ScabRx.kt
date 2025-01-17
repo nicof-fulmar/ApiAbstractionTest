@@ -13,7 +13,7 @@ data class ScabRx (
     var packetNumber:   Byte = 0,
     var checksum:       Byte = 0,
     val close:          Byte = '>'.code.toByte()
-)
+): TramaRx
 
 data class ScabRxUI (
     var state: Char = ' ',

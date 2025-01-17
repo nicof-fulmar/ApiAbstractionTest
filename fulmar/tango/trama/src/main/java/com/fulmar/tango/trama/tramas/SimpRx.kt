@@ -32,7 +32,7 @@ data class SimpRx (
     var packetNumber:       Byte = 0,
     var checksum:           Byte = 0,
     val close:              Byte = '>'.code.toByte()
-)
+) : TramaRx
 
 data class SimpRxUI (
     val serial:             String,

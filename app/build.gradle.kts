@@ -42,6 +42,7 @@ dependencies {
     implementation(project(":supermegazinc:ble_upgrade"))
     implementation(project(":fulmar:tango:session"))
     implementation(project(":fulmar:tango:layer1"))
+    implementation(project(":fulmar:tango:trama"))
     implementation(project(":supermegazinc:security:cryptography"))
 
 

@@ -5,8 +5,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
@@ -23,10 +26,15 @@ class BLEDeviceCharacteristicTestImpl(
     override val message: StateFlow<ByteArray?>
         get() = _message.asStateFlow()
 
+    private val _messagee = MutableSharedFlow<ByteArray?>()
+    val messagee: SharedFlow<ByteArray?>
+        get() = _messagee.asSharedFlow()
+
     override val uuid: UUID
         get() = _uuid
 
     override fun close() {
+        notificationJob?.cancel()
         _message.update { null }
     }
 
@@ -42,9 +50,9 @@ class BLEDeviceCharacteristicTestImpl(
     override fun setNotification(state: Boolean) {
         notificationJob?.cancel()
         if(!state) return
-        coroutineScope.launch {
+        notificationJob = coroutineScope.launch {
             while(isActive) {
-                _message.update { value }
+                _messagee.emit(value)
                 delay(2000)
             }
         }

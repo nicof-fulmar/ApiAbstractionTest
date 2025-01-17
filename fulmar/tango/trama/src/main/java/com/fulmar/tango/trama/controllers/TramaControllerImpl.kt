@@ -1,6 +1,8 @@
 package com.fulmar.tango.trama.controllers
 
 import android.util.Log
+import com.supermegazinc.logger.Logger
+import com.supermegazinc.logger.LoggerCustom
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
@@ -12,7 +14,9 @@ import kotlin.reflect.full.primaryConstructor
  * @author Nicolás Ferreyra
  */
 @Suppress("UNCHECKED_CAST", "UNUSED_EXPRESSION")
-class TramaControllerImpl: TramaController {
+class TramaControllerImpl(
+    private val logger: Logger = LoggerCustom(false, false, false)
+): TramaController {
 
     private companion object {
         const val ENABLE_DEBUG = true
@@ -47,28 +51,28 @@ class TramaControllerImpl: TramaController {
     override fun serialize(target: Any): List<Byte>? {
 
         if(!target::class.isData) {
-            if(ENABLE_DEBUG) Log.e("$GLOBAL_LOG_KEY-$SERIALIZE_LOG_KEY", "${target::class.simpleName}$OBJECT_NOT_DATA")
+            if(ENABLE_DEBUG) logger.e("$GLOBAL_LOG_KEY-$SERIALIZE_LOG_KEY", "${target::class.simpleName}$OBJECT_NOT_DATA")
             return null
         }
 
         val properties = target::class.memberProperties.also {tProperties->
             if(tProperties.isEmpty()) {
-                if(ENABLE_DEBUG) Log.d("$GLOBAL_LOG_KEY-$SERIALIZE_LOG_KEY", "$SERIALIZE_REQ${target::class.simpleName}")
-                if(ENABLE_DEBUG) Log.e("$GLOBAL_LOG_KEY-$SERIALIZE_LOG_KEY", "${target::class.simpleName}$OBJECT_EMPTY")
+                if(ENABLE_DEBUG) logger.d("$GLOBAL_LOG_KEY-$SERIALIZE_LOG_KEY", "$SERIALIZE_REQ${target::class.simpleName}")
+                if(ENABLE_DEBUG) logger.e("$GLOBAL_LOG_KEY-$SERIALIZE_LOG_KEY", "${target::class.simpleName}$OBJECT_EMPTY")
                 return null
             }
         }
 
         target::class.primaryConstructor?.parameters.also {tParameters->
             if(tParameters.isNullOrEmpty()) {
-                if(ENABLE_DEBUG) Log.d("$GLOBAL_LOG_KEY-$SERIALIZE_LOG_KEY", "$SERIALIZE_REQ${target::class.simpleName}")
-                if(ENABLE_DEBUG) Log.e("$GLOBAL_LOG_KEY-$SERIALIZE_LOG_KEY", "${target::class.simpleName}$OBJECT_EMPTY")
+                if(ENABLE_DEBUG) logger.d("$GLOBAL_LOG_KEY-$SERIALIZE_LOG_KEY", "$SERIALIZE_REQ${target::class.simpleName}")
+                if(ENABLE_DEBUG) logger.e("$GLOBAL_LOG_KEY-$SERIALIZE_LOG_KEY", "${target::class.simpleName}$OBJECT_EMPTY")
                 return null
             }
         }?.map {tParameter->
             properties.firstOrNull{it.name == tParameter.name}.let {tProperty->
                 if(tProperty == null) {
-                    if(ENABLE_DEBUG) Log.e("$GLOBAL_LOG_KEY-$SERIALIZE_LOG_KEY", "$CANT_MATCH${tParameter.name}")
+                    if(ENABLE_DEBUG) logger.e("$GLOBAL_LOG_KEY-$SERIALIZE_LOG_KEY", "$CANT_MATCH${tParameter.name}")
                     return null
                 }
                 val name = tProperty.name
@@ -87,7 +91,7 @@ class TramaControllerImpl: TramaController {
                     else -> null
                 }.let {
                     if(it==null) {
-                        if(ENABLE_DEBUG) Log.e("$GLOBAL_LOG_KEY-$SERIALIZE_LOG_KEY", "$INVALID_TYPE${target::class.simpleName} - $name: $type")
+                        if(ENABLE_DEBUG) logger.e("$GLOBAL_LOG_KEY-$SERIALIZE_LOG_KEY", "$INVALID_TYPE${target::class.simpleName} - $name: $type")
                         return null
                     }
                     Pair(name, it)
@@ -95,7 +99,7 @@ class TramaControllerImpl: TramaController {
             }
         }?.also {tValues->
 
-            if(ENABLE_DEBUG) Log.d("$GLOBAL_LOG_KEY-$SERIALIZE_LOG_KEY", "$SERIALIZE_START${target::class.simpleName}\n${
+            if(ENABLE_DEBUG) logger.d("$GLOBAL_LOG_KEY-$SERIALIZE_LOG_KEY", "$SERIALIZE_START${target::class.simpleName}\n${
                 tValues.joinToString("\n") {"${it.first}: \"${it.second.decodeToString()}\" ; [${it.second.size}](${it.second.joinToString(", ") {byte-> byte.toString()}})"}
             }")
 
@@ -104,7 +108,7 @@ class TramaControllerImpl: TramaController {
                     tArray.forEach{tList-> addAll(tList)}
                 }
             }.also {tOut->
-                if(ENABLE_DEBUG) Log.i("$GLOBAL_LOG_KEY-$SERIALIZE_LOG_KEY",
+                if(ENABLE_DEBUG) logger.i("$GLOBAL_LOG_KEY-$SERIALIZE_LOG_KEY",
                     "$SERIALIZE_RESULT${target::class.simpleName}\n" +
                             "Text: ${tOut.toByteArray().decodeToString()}\n" +
                             "Bytes[${tOut.size}]: [${tOut.joinToString(", ") {it.toString()}}]")
@@ -128,20 +132,20 @@ class TramaControllerImpl: TramaController {
     override fun deserialize(trama: List<Byte>, target: Any): Boolean {
 
         if(!target::class.isData) {
-            if(ENABLE_DEBUG) Log.d("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY", "$DESERIALIZE_REQ${target::class.simpleName}")
-            if(ENABLE_DEBUG) Log.e("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY", "${target::class.simpleName}$OBJECT_NOT_DATA")
+            if(ENABLE_DEBUG) logger.d("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY", "$DESERIALIZE_REQ${target::class.simpleName}")
+            if(ENABLE_DEBUG) logger.e("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY", "${target::class.simpleName}$OBJECT_NOT_DATA")
             return false
         }
 
         val properties = target::class.memberProperties.also {tProperties->
             if(tProperties.isEmpty()) {
-                if(ENABLE_DEBUG) Log.d("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY", "$DESERIALIZE_REQ${target::class.simpleName}")
-                if(ENABLE_DEBUG) Log.e("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY", "${target::class.simpleName}$OBJECT_EMPTY")
+                if(ENABLE_DEBUG) logger.d("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY", "$DESERIALIZE_REQ${target::class.simpleName}")
+                if(ENABLE_DEBUG) logger.e("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY", "${target::class.simpleName}$OBJECT_EMPTY")
                 return false
             }
         }
 
-        if(ENABLE_DEBUG) Log.d("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY",
+        if(ENABLE_DEBUG) logger.d("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY",
             "$DESERIALIZE_START${target::class.simpleName}\n" +
                     "Text: ${trama.toByteArray().decodeToString()}\n" +
                     "Bytes[${trama.size}]: [${trama.joinToString(", ") {it.toString()}}]")
@@ -150,13 +154,13 @@ class TramaControllerImpl: TramaController {
         var index = 0
         target::class.primaryConstructor?.parameters.also {tParameters->
             if(tParameters.isNullOrEmpty()) {
-                if(ENABLE_DEBUG) Log.e("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY", "${target::class.simpleName}$OBJECT_EMPTY")
+                if(ENABLE_DEBUG) logger.e("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY", "${target::class.simpleName}$OBJECT_EMPTY")
                 return false
             }
         }?.map {tParameter->
             properties.firstOrNull{it.name == tParameter.name}.also {tProperty->
                 if(tProperty == null) {
-                    if(ENABLE_DEBUG) Log.e("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY", "$CANT_MATCH${tParameter.name}")
+                    if(ENABLE_DEBUG) logger.e("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY", "$CANT_MATCH${tParameter.name}")
                     return false
                 }
             }?.apply {
@@ -174,7 +178,7 @@ class TramaControllerImpl: TramaController {
                             } else {
                                 trama[index.also{index++}].also {
                                     if((tProperty.getter.call(target) as Byte) != it) {
-                                        if(ENABLE_DEBUG) Log.e("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY", "$DESERIALIZE_VALIDATE_ERROR${target::class.simpleName} -> ${tProperty.name}")
+                                        if(ENABLE_DEBUG) logger.e("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY", "$DESERIALIZE_VALIDATE_ERROR${target::class.simpleName} -> ${tProperty.name}")
                                         return false
                                     }
                                 }.let { listOf(it) }
@@ -183,7 +187,7 @@ class TramaControllerImpl: TramaController {
                         "kotlin.collections.List<kotlin.Byte>" -> {
                             (tProperty.getter.call(target) as List<Byte>).onEach {
                                 if(trama[index.also{index++}] != it) {
-                                    if(ENABLE_DEBUG) Log.e("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY", "$DESERIALIZE_VALIDATE_ERROR${target::class.simpleName} -> ${tProperty.name}")
+                                    if(ENABLE_DEBUG) logger.e("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY", "$DESERIALIZE_VALIDATE_ERROR${target::class.simpleName} -> ${tProperty.name}")
                                     return false
                                 }
                             }
@@ -196,19 +200,19 @@ class TramaControllerImpl: TramaController {
                             }
                         }
                         else -> {
-                            if(ENABLE_DEBUG) Log.e("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY", "$INVALID_TYPE${target::class.simpleName} - $name: $type")
+                            if(ENABLE_DEBUG) logger.e("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY", "$INVALID_TYPE${target::class.simpleName} - $name: $type")
                             return false
                         }
                     }
                 } catch (e: IndexOutOfBoundsException) {
-                    if(ENABLE_DEBUG) Log.e("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY", "$OVERFLOW${target::class.simpleName}")
+                    if(ENABLE_DEBUG) logger.e("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY", "$OVERFLOW${target::class.simpleName}")
                     return false
                 }.let {
                     Pair(name, it.toByteArray())
                 }
             }
         }?.also {tValues->
-            if(ENABLE_DEBUG) Log.i("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY", "$DESERIALIZE_RESULT${target::class.simpleName}\n${
+            if(ENABLE_DEBUG) logger.i("$GLOBAL_LOG_KEY-$DESERIALIZE_LOG_KEY", "$DESERIALIZE_RESULT${target::class.simpleName}\n${
                 tValues.joinToString("\n") {"${it.first}: \"${it.second.decodeToString()}\" ; [${it.second.size}](${it.second.joinToString(", ") {byte-> byte.toString()}})"}
             }")
             return true

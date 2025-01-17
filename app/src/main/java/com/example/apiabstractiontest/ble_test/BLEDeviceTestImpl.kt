@@ -108,6 +108,11 @@ class BLEDeviceTestImpl(
                         ),
                         BLEDeviceCharacteristicTestImpl(
                             BLETestK.CHARACTERISTIC_RECEIVE_TELEMETRY_UUID,
+                            BLETestK.TANGO_TELEMETRY_PAYLOAD,
+                            coroutineScope
+                        ),
+                        BLEDeviceCharacteristicTestImpl(
+                            BLETestK.CHARACTERISTIC_SEND_TELEMETRY_UUID,
                             null,
                             coroutineScope
                         ),

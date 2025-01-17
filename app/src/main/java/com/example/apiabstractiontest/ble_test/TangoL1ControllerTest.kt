@@ -1,7 +1,10 @@
 package com.example.apiabstractiontest.ble_test
 
+import androidx.compose.runtime.collectAsState
+import com.fulmar.layer1.service.tangoL1IncomingMessageProcessorService
 import com.fulmar.layer1.service.tangoL1SessionService
 import com.fulmar.tango.session.TangoSessionController
+import com.fulmar.tango.trama.controllers.TramaControllerImpl
 import com.supermegazinc.ble_upgrade.BLEUpgradeController
 import com.supermegazinc.ble_upgrade.model.BLEUpgradeConnectionStatus
 import com.supermegazinc.escentials.Status
@@ -9,17 +12,25 @@ import com.supermegazinc.escentials.firstWithTimeout
 import com.supermegazinc.logger.Logger
 import com.supermegazinc.security.cryptography.CryptographyController
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.UUID
+import kotlin.math.log
 
 class TangoL1ControllerTest(
     private val bleUpgradeController: BLEUpgradeController,
@@ -104,6 +115,8 @@ class TangoL1ControllerTest(
         }
     }
 
+    private val incomingMessages = MutableSharedFlow<ByteArray>()
+
     init {
 
         coroutineScope.launch {
@@ -118,74 +131,50 @@ class TangoL1ControllerTest(
             )
         }
 
-        /*
         coroutineScope.launch {
-            coroutineScope {
-                bleUpgradeController
-                    .status
-                    .collectLatest { status->
-                        delay(9000)
-                        testSuite.triggerConnectionLost()
-
-                        /*
-                        launch {
-                            if(status is BLEUpgradeConnectionStatus.Connected) {
-                                delay(500)
-                                testSuite.triggerAdapterOff()
-                                delay(2000)
-                                testSuite.triggerAdapterOn()
-                            }
-                        }
-
-                         */
+            tangoL1IncomingMessageProcessorService(
+                messages = incomingMessages,
+                tramaController = TramaControllerImpl(),
+                cryptographyController = cryptographyController,
+                sharedKey = tangoSessionController.session.map { (it as? Status.Ready)?.data?.sharedKey?.toByteArray() }.stateIn(coroutineScope),
+                //sharedKey = MutableStateFlow(BLETestK.TANGO_SHARED_KEY)
+                logger = logger,
+                onSend = { message->
+                    logger.i(LOG_KEY, "Enviando: \n${message.toList()}")
+                    launch {
+                        bleUpgradeController.characteristics
+                            .value
+                            .firstOrNull { it.uuid == BLETestK.CHARACTERISTIC_SEND_TELEMETRY_UUID }
+                            ?.send(message)
                     }
-            }
+                },
+                onReceive = {trama->
+                    logger.i(LOG_KEY, "Recibido: \n${trama}")
+                }
+            )
         }
 
-         */
-
         coroutineScope.launch {
             coroutineScope {
                 bleUpgradeController
                     .status
+                    .filterIsInstance<BLEUpgradeConnectionStatus.Connected>()
                     .collectLatest { _->
-
                         bleUpgradeController
                             .characteristics
                             .mapNotNull { characteristics->
                                 characteristics.firstOrNull {
-                                    it.uuid == UUID.fromString("beb5483e-36e1-4688-b7f5-ea07361b26a7")
+                                    it.uuid == BLETestK.CHARACTERISTIC_RECEIVE_TELEMETRY_UUID
                                 }
                             }.collectLatest { characteristic->
 
                                 characteristic.setNotification(true)
 
-                                characteristic
-                                    .message
+                                (characteristic as BLEDeviceCharacteristicTestImpl)
+                                    .messagee
                                     .filterNotNull()
                                     .collect { incomingMsg->
-
-                                        logger.d(LOG_KEY, "Mensaje recibido")
-                                        logger.d(LOG_KEY, "Desencriptando..")
-                                        val shared = (tangoSessionController.session.value as? Status.Ready)?.data?.sharedKey
-                                        if(shared == null) {
-                                            logger.e(LOG_KEY, "No hay una sesion en curso")
-                                            return@collect
-                                        }
-
-                                        val decrypted = cryptographyController.decrypt(
-                                            msg = incomingMsg,
-                                            key = shared.toByteArray()
-                                        )
-
-                                        if(decrypted == null) {
-                                            logger.e(LOG_KEY, "No se pudo desencriptar")
-                                            return@collect
-                                        }
-
-                                        logger.i(
-                                            LOG_KEY, "Desencriptado[BYT]: ${decrypted.toList()} + " +
-                                                "\nDesencriptado[STR]: ${decrypted.decodeToString()}")
+                                        incomingMessages.emit(incomingMsg)
                                     }
                             }
                     }

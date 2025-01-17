@@ -10,8 +10,8 @@ data class Header (
 )
 
 data class HeaderUI(
-    var packetNumber: Long = 0,
-    var cmd: Long = Commands.RELAY.code,
+    var packetNumber: Int = 0,
+    var cmd: Commands = Commands.RELAY
 )
 
 fun HeaderUI.toTrama() : Header? {
@@ -19,8 +19,8 @@ fun HeaderUI.toTrama() : Header? {
         Header().apply {
             packetNumber[0] = ((this@toTrama.packetNumber shl 8) and 255).toByte()
             packetNumber[1] = (this@toTrama.packetNumber and 255).toByte()
-            cmd[0] = ((this@toTrama.cmd shl 8) and 255).toByte()
-            cmd[1] = (this@toTrama.cmd and 255).toByte()
+            cmd[0] = ((this@toTrama.cmd.code shl 8) and 255).toByte()
+            cmd[1] = (this@toTrama.cmd.code and 255).toByte()
         }
     } catch (_:Exception) {
         null
@@ -30,8 +30,8 @@ fun HeaderUI.toTrama() : Header? {
 fun Header.toUI() : HeaderUI? {
     return try {
         HeaderUI(
-            packetNumber = (this.packetNumber[0].toLong() shl 8) or this.packetNumber[1].toLong(),
-            cmd = (this.cmd[0].toLong() shl 8) or this.cmd[1].toLong()
+            packetNumber = ((this.packetNumber[0].toLong() shl 8) or this.packetNumber[1].toLong()).toInt(),
+            cmd = Commands.entries.first { ((this.cmd[0].toLong() shl 8) or this.cmd[1].toLong()).toInt() == it.code}
         )
     } catch (_:Exception) {
         null

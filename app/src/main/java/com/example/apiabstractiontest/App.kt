@@ -42,7 +42,6 @@ class App: Application() {
         val bleTestSuite = BLETestSuite(logger,coroutineScope)
 
         /*
-
         bleController = BLEControllerTestImpl(
             name = BLETestK.TANGO_BLE_NAME,
             bleTestSuite,
@@ -50,7 +49,6 @@ class App: Application() {
         )
 
          */
-
 
         bleUpgrade = BLEUpgradeControllerImpl(
             bleController,
