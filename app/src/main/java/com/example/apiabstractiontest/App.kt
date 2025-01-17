@@ -39,9 +39,8 @@ class App: Application() {
             coroutineScope = coroutineScope
         )
 
-        val bleTestSuite = BLETestSuite(logger,coroutineScope)
-
         /*
+        val bleTestSuite = BLETestSuite(logger,coroutineScope)
         bleController = BLEControllerTestImpl(
             name = BLETestK.TANGO_BLE_NAME,
             bleTestSuite,
@@ -64,7 +63,6 @@ class App: Application() {
             bleUpgrade,
             tangoSession,
             CryptographyController(applicationContext, logger),
-            bleTestSuite,
             logger,
             coroutineScope
         )

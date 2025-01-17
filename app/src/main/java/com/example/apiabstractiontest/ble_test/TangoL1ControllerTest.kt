@@ -36,7 +36,6 @@ class TangoL1ControllerTest(
     private val bleUpgradeController: BLEUpgradeController,
     private val tangoSessionController: TangoSessionController,
     private val cryptographyController: CryptographyController,
-    private val testSuite: BLETestSuite,
     private val logger: Logger,
     private val coroutineScope: CoroutineScope,
 ) {
@@ -170,8 +169,8 @@ class TangoL1ControllerTest(
 
                                 characteristic.setNotification(true)
 
-                                (characteristic as BLEDeviceCharacteristicTestImpl)
-                                    .messagee
+                                characteristic
+                                    .message
                                     .filterNotNull()
                                     .collect { incomingMsg->
                                         incomingMessages.emit(incomingMsg)
