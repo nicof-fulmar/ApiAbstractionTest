@@ -3,8 +3,11 @@ package com.example.apiabstractiontest
 import com.fulmar.firmware.model.TangoFirmwareInitJson
 import com.fulmar.firmware.util.dividePacket
 import com.google.gson.Gson
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,6 +17,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.math.BigInteger
 import java.security.KeyFactory
 import java.security.KeyPair
@@ -26,18 +30,39 @@ import java.security.spec.ECPoint
 import java.security.spec.ECPublicKeySpec
 import java.security.spec.X509EncodedKeySpec
 import javax.crypto.KeyAgreement
+import kotlin.coroutines.coroutineContext
 
 fun main() {
 
-    val gson = Gson()
+    val coroutineScope = CoroutineScope(Dispatchers.IO)
 
-    val init = TangoFirmwareInitJson(
-        TangoFirmwareInitJson.TangoFirmwareInitData(
-            version = "1.0.0",
-            size = 1024,
-            packetQty = 10
-        )
-    )
+    runBlocking {
+        withContext(coroutineScope.coroutineContext) {
+            launch {
+                println(hacerAlgo())
+            }
+            delay(2000)
+            launch {
+                println(hacerAlgo())
+            }
+            coroutineScope.coroutineContext[Job]?.invokeOnCompletion {
+                println("Completado")
+            }
+        }
+    }
+}
 
-    println(gson.toJson(init))
+private var algoJob: Job? = null
+suspend fun hacerAlgo(): Boolean {
+    algoJob?.cancel()
+    algoJob = SupervisorJob()
+    return try {
+        withContext(coroutineContext + algoJob!!) {
+            delay(5000)
+            return@withContext true
+        }
+    }catch (e: CancellationException) {
+        println("Cancelado")
+        return false
+    }
 }

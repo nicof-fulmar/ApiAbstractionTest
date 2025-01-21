@@ -20,36 +20,40 @@ import com.fulmar.tango.trama.tramas.TramaTx
 import com.fulmar.tango.trama.tramas.toTicketUI
 import com.fulmar.tango.trama.tramas.toTrama
 import com.fulmar.tango.trama.tramas.toUI
-import com.google.gson.Gson
 import com.supermegazinc.ble_upgrade.BLEUpgradeController
 import com.supermegazinc.ble_upgrade.model.BLEUpgradeConnectionStatus
-import com.supermegazinc.escentials.Result
 import com.supermegazinc.escentials.Status
 import com.supermegazinc.escentials.firstWithTimeout
 import com.supermegazinc.logger.Logger
 import com.supermegazinc.security.cryptography.CryptographyController
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.UUID
 
-class TangoL1ControllerTestImpl(
+@OptIn(ExperimentalCoroutinesApi::class)
+class TangoL1ControllerTestConexionImpl(
     private val bleUpgradeController: BLEUpgradeController,
     private val cryptographyController: CryptographyController,
     private val tangoSessionController: TangoSessionController,
@@ -66,7 +70,6 @@ class TangoL1ControllerTestImpl(
     private val incomingMessages = MutableSharedFlow<Pair<UUID, ByteArray>>()
 
     private val incomingFirmware = Channel<ByteArray>()
-    private val firmwareTx = MutableSharedFlow<ByteArray>()
 
     private val _status = MutableStateFlow<TangoL1Status>(TangoL1Status.Disconnected)
     override val status = _status.asStateFlow()
@@ -74,25 +77,12 @@ class TangoL1ControllerTestImpl(
     private val _telemetry = MutableStateFlow(TangoL1Telemetry())
     override val telemetry = _telemetry.asStateFlow()
 
-    private val sharedKeyFlow = tangoSessionController.session.map { (it as? Status.Ready)?.data?.sharedKey?.toByteArray() }.stateIn(coroutineScope, SharingStarted.Eagerly, null)
-
-    private val firmwareController = TangoFirmwareController(
-        connected = _status.map{ it is TangoL1Status.Connected }.distinctUntilChanged(),
-        onSendFirmwareInit = {
-            firmwareTx.emit(it)
-            true
-        },
-        onSendFirmwareFrame = {
-            firmwareTx.emit(it)
-            true
-        },
-        firmwareRx = incomingFirmware,
-        onObtainFirmwareBinary = {
-            context.resources.openRawResource(R.raw.firmware).readBytes()
-        },
-        logger = logger,
-        coroutineScope = coroutineScope
-    )
+    private val sharedKeyFlow = tangoSessionController.session.map { (it as? Status.Ready)?.data?.sharedKey?.toByteArray() }
+        .stateIn(
+            coroutineScope,
+            SharingStarted.Eagerly,
+            null
+        )
 
     private var newSessionJob: Job? = null
     private fun newSession() {
@@ -123,8 +113,7 @@ class TangoL1ControllerTestImpl(
 
                     receiveCharacteristic.forceRead()
                     val peerPublicKey = receiveCharacteristic.message
-                        .filterNotNull()
-                        .firstWithTimeout(5000)
+                        .receiveAsFlow().filterNotNull().firstWithTimeout(1000)
                     logger.d(LOG_KEY,"Encontrada, clave recibida [${peerPublicKey.size}]: ${peerPublicKey.toList()}")
 
                     if(!cryptographyController.verifyPublicKeySignature(peerPublicKey.copyOfRange(0,65),peerPublicKey.copyOfRange(65,65+256))) {
@@ -153,9 +142,11 @@ class TangoL1ControllerTestImpl(
                         return@run false
                     }
 
+                    delay(1000)
+
                     bleUpgradeController.discoverServices()
-                    firmwareController.setTangoVersion("1.0.0")
-                    firmwareController.setApiVersion("1.0.1")
+
+                    delay(3000)
 
                     logger.i(
                         LOG_KEY,"Sesion generada con exito\n" +
@@ -192,7 +183,7 @@ class TangoL1ControllerTestImpl(
                 servicesUUID = listOf(TangoL1Config.SERVICE_MAIN_UUID),
                 mtu = 516
             )
-            if(result is Result.Fail) {
+            if(!result) {
                 logger.e(LOG_KEY, "No se pudo conectar")
                 _status.update { TangoL1Status.Disconnected }
             }
@@ -205,7 +196,6 @@ class TangoL1ControllerTestImpl(
         newSessionJob?.cancel()
         bleUpgradeController.disconnect()
         _status.update { TangoL1Status.Disconnected }
-        firmwareController.clear()
     }
 
     private fun createPayload(payload: ByteArray, sharedKey: ByteArray): ByteArray? {
@@ -214,9 +204,9 @@ class TangoL1ControllerTestImpl(
         return cryptographyController.encrypt((headerBytes.toList() + payload.toList()).toByteArray(), sharedKey)
     }
 
-    override suspend fun sendTelemetry(payload: TramaTx) {
+    override suspend fun sendTelemetry(trama: TramaTx) {
         withContext(coroutineScope.coroutineContext) {
-            logger.i(LOG_KEY, "Enviando mensaje: '${payload::class.simpleName}'\n${payload}")
+            logger.i(LOG_KEY, "Enviando mensaje: '${trama::class.simpleName}'\n${trama}")
 
             val shared = sharedKeyFlow.value ?: run {
                 logger.e(LOG_KEY, "Error al obtener la clave compartida")
@@ -228,7 +218,7 @@ class TangoL1ControllerTestImpl(
                 return@withContext
             }
 
-            val serialized = tramaController.serialize(payload)!!.toByteArray()
+            val serialized = tramaController.serialize(trama)!!.toByteArray()
             val encrypted = createPayload(serialized, shared) ?: run {
                 logger.e(LOG_KEY, "Error al encriptar")
                 return@withContext
@@ -303,7 +293,7 @@ class TangoL1ControllerTestImpl(
             coroutineScope {
                 bleUpgradeController
                     .status
-                    .filterIsInstance<BLEUpgradeConnectionStatus.Connected>()
+                    .filter { it == BLEUpgradeConnectionStatus.Connected }
                     .collectLatest { _->
                         coroutineScope {
                             launch {
@@ -317,16 +307,15 @@ class TangoL1ControllerTestImpl(
                                     .distinctUntilChanged { old, new->
                                         old === new
                                     }
-                                    .collectLatest { characteristic->
-
+                                    .flatMapLatest { characteristic->
                                         characteristic.setNotification(true)
-
                                         characteristic
                                             .message
+                                            .consumeAsFlow()
                                             .filterNotNull()
-                                            .collect { incomingMsg->
-                                                incomingMessages.emit(Pair(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY_UUID, incomingMsg))
-                                            }
+                                    }
+                                    .collect { incomingMsg->
+                                        incomingMessages.emit(Pair(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY_UUID, incomingMsg))
                                     }
                             }
                             launch {
@@ -340,66 +329,26 @@ class TangoL1ControllerTestImpl(
                                     .distinctUntilChanged { old, new->
                                         old === new
                                     }
-                                    .collectLatest { characteristic->
-
+                                    .flatMapLatest { characteristic->
                                         characteristic.setNotification(true)
-
                                         characteristic
                                             .message
+                                            .consumeAsFlow()
                                             .filterNotNull()
-                                            .collect { incomingMsg->
-                                                incomingMessages.emit(Pair(TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE, incomingMsg))
-                                            }
+                                    }
+                                    .collect { incomingMsg->
+                                        incomingMessages.emit(Pair(TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE, incomingMsg))
                                     }
                             }
-                            /*
-                            launch {
-                                bleUpgradeController
-                                    .characteristics
-                                    .mapNotNull { characteristics->
-                                        characteristics.firstOrNull {
-                                            it.uuid == TangoL1Config.CHARACTERISTIC_RECEIVE_PROGRAMACION
-                                        }
-                                    }
-                                    .distinctUntilChanged { old, new->
-                                        old === new
-                                    }
-                                    .collectLatest { characteristic->
-
-                                        characteristic.forceRead()
-
-                                        characteristic
-                                            .message
-                                            .filterNotNull()
-                                            .collect { incomingMsg->
-                                                incomingMessages.emit(Pair(TangoL1Config.CHARACTERISTIC_RECEIVE_PROGRAMACION, incomingMsg))
-                                            }
-                                    }
-                            }
-
-                             */
                         }
                     }
             }
         }
 
         coroutineScope.launch {
-            tangoFirmwareReceiverTest(
-                incomingFirmware = firmwareTx,
-                onSend = {
-                    coroutineScope.launch {
-                        incomingFirmware.send(it)
-                    }
-                },
-                logger = logger,
-                gson = Gson()
-            )
-        }
-
-        coroutineScope.launch {
             bleUpgradeController
                 .status
-                .filterIsInstance<BLEUpgradeConnectionStatus.Reconnecting>()
+                .filter { it == BLEUpgradeConnectionStatus.Reconnecting }
                 .collectLatest {_->
                     logger.i(LOG_KEY, "Reconexion detectada")
                     if(newSessionJob?.isActive==true) {

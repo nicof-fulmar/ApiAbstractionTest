@@ -1,11 +1,7 @@
 package com.example.apiabstractiontest
 
 import android.app.Application
-import com.example.apiabstractiontest.ble_test.BLEControllerTestImpl
-import com.example.apiabstractiontest.ble_test.BLETestK
-import com.example.apiabstractiontest.ble_test.BLETestSuite
-import com.example.apiabstractiontest.ble_test.CryptographyControllerTestImpl
-import com.example.apiabstractiontest.ble_test.TangoL1ControllerTestImpl
+import com.example.apiabstractiontest.ble_test.TangoL1ControllerTestConexionImpl
 import com.example.apiabstractiontest.ble_test.TangoL1ControllerTestPiolaImpl
 import com.fulmar.tango.layer1.TangoL1Controller
 import com.fulmar.tango.session.TangoSessionController
@@ -40,7 +36,7 @@ class App: Application() {
         bleController = BLEControllerImpl(
             context = applicationContext,
             logger = logger,
-            coroutineScope = coroutineScope
+            coroutineContext = coroutineScope.coroutineContext
         )
         val cryptographyController = CryptographyControllerImpl(
             applicationContext,
@@ -61,7 +57,7 @@ class App: Application() {
         bleUpgrade = BLEUpgradeControllerImpl(
             bleController,
             logger = logger,
-            coroutineScope
+            coroutineContext = coroutineScope.coroutineContext
         )
 
         tangoSession = TangoSessionControllerImpl(
@@ -80,7 +76,7 @@ class App: Application() {
          */
 
 
-        tangoL1Controller = TangoL1ControllerTestPiolaImpl(
+        tangoL1Controller = TangoL1ControllerTestConexionImpl(
             bleUpgrade,
             cryptographyController,
             tangoSession,

@@ -9,7 +9,7 @@ suspend fun tangoL1SessionService(
     onEndSession: () -> Unit
 ) {
     connectionStatus.collect { status->
-        if(status is BLEUpgradeConnectionStatus.Connected) onNewSession()
+        if(status == BLEUpgradeConnectionStatus.Connected) onNewSession()
         else onEndSession()
     }
 }
