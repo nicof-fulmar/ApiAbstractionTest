@@ -1,21 +1,129 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+##---------------Begin: proguard configuration for Tramas  ----------
+-keepclassmembers class com.fulmar.tango.trama.tramas.** {*;}
+-keep class com.fulmar.tango.trama.tramas.**
+##---------------End: proguard configuration for Tramas  ----------
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+##---------------Begin: proguard configuration for Gson  ----------
+-keepclassmembers class com.fulmar.tangoapp.feature_api.models.** {*;}
+-keep class com.fulmar.tangoapp.feature_api.models.**
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+-keepclassmembers class com.example.apiabstractiontest.R
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+-keep class com.fulmar.tangoapp.feature_api.controllers.ApiL1Controller {*;}
+
+# Mantener todas las clases que son usadas como modelos de datos (tu JSON input/output)
+-keepclassmembers class com.fulmar.tangoapp.feature_api.models.** {*;}
+
+# Evitar que se obfusquen los nombres de métodos que comienzan con "auth", "vehicle", "tracking", "location"
+-keepclassmembers class com.fulmar.tangoapp.feature_api.controllers.ApiL1Controller {<methods>;}
+
+# Gson uses generic type information stored in a class file when working with fields. Proguard
+# removes such information by default, so configure it to keep all of it.
+-keepattributes Signature
+
+# For using GSON @Expose annotation
+-keepattributes *Annotation*
+
+# Gson specific classes
+-dontwarn sun.misc.**
+#-keep class com.google.gson.stream.** { *; }
+
+# Application classes that will be serialized/deserialized over Gson
+-keep class com.google.gson.examples.android.model.** { <fields>; }
+
+# Prevent proguard from stripping interface information from TypeAdapter, TypeAdapterFactory,
+# JsonSerializer, JsonDeserializer instances (so they can be used in @JsonAdapter)
+-keep class * extends com.google.gson.TypeAdapter
+-keep class * implements com.google.gson.TypeAdapterFactory
+-keep class * implements com.google.gson.JsonSerializer
+-keep class * implements com.google.gson.JsonDeserializer
+
+# Prevent R8 from leaving Data object members always null
+-keep class * {
+  @com.google.gson.annotations.SerializedName <fields>;
+}
+
+# Retain generic signatures of TypeToken and its subclasses with R8 version 3.0 and higher.
+-keep,allowobfuscation,allowshrinking class com.google.gson.reflect.TypeToken
+-keep,allowobfuscation,allowshrinking class * extends com.google.gson.reflect.TypeToken
+
+##---------------End: proguard configuration for Gson  ----------
+
+
+
+##---------------Begin: proguard configuration for Retrofit  ----------
+# Retrofit does reflection on generic parameters. InnerClasses is required to use Signature and
+# EnclosingMethod is required to use InnerClasses.
+-keepattributes Signature, InnerClasses, EnclosingMethod
+
+# Retrofit does reflection on method and parameter annotations.
+-keepattributes RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
+
+# Keep annotation default values (e.g., retrofit2.http.Field.encoded).
+-keepattributes AnnotationDefault
+
+# Retain service method parameters when optimizing.
+-keepclassmembers,allowshrinking,allowobfuscation interface * {
+    @retrofit2.http.* <methods>;
+}
+
+# Ignore JSR 305 annotations for embedding nullability information.
+-dontwarn javax.annotation.**
+
+# Guarded by a NoClassDefFoundError try/catch and only used when on the classpath.
+-dontwarn kotlin.Unit
+
+# Top-level functions that can only be used by Kotlin.
+-dontwarn retrofit2.KotlinExtensions
+-dontwarn retrofit2.KotlinExtensions$*
+
+# With R8 full mode, it sees no subtypes of Retrofit interfaces since they are created with a Proxy
+# and replaces all potential values with null. Explicitly keeping the interfaces prevents this.
+-if interface * { @retrofit2.http.* <methods>; }
+-keep,allowobfuscation interface <1>
+
+# Keep inherited services.
+-if interface * { @retrofit2.http.* <methods>; }
+-keep,allowobfuscation interface * extends <1>
+
+# With R8 full mode generic signatures are stripped for classes that are not
+# kept. Suspend functions are wrapped in continuations where the type argument
+# is used.
+-keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
+
+# R8 full mode strips generic signatures from return types if not kept.
+-if interface * { @retrofit2.http.* public *** *(...); }
+-keep,allowoptimization,allowshrinking,allowobfuscation class <3>
+
+# With R8 full mode generic signatures are stripped for classes that are not kept.
+-keep,allowobfuscation,allowshrinking class retrofit2.Response
+
+-dontwarn rx.**
+
+-dontwarn okio.**
+
+-dontwarn com.squareup.okhttp.**
+-keep class com.squareup.okhttp.** { *; }
+-keep interface com.squareup.okhttp.** { *; }
+
+-dontwarn retrofit.**
+-dontwarn retrofit.appengine.UrlFetchClient
+-keep class retrofit.** { *; }
+-keepclasseswithmembers class * {
+    @retrofit.http.* <methods>;
+}
+
+-keepattributes Signature
+-keepattributes *Annotation*
+
+-keep class okhttp3.Headers { *; }
+##---------------END: proguard configuration for Retrofit  ----------
+
+-dontwarn javax.naming.NamingEnumeration
+-dontwarn javax.naming.NamingException
+-dontwarn javax.naming.directory.Attribute
+-dontwarn javax.naming.directory.Attributes
+-dontwarn javax.naming.directory.DirContext
+-dontwarn javax.naming.directory.InitialDirContext
+-dontwarn javax.naming.directory.SearchControls
+-dontwarn javax.naming.directory.SearchResult

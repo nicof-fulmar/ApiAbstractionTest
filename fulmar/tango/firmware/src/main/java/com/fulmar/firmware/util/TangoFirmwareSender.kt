@@ -4,17 +4,22 @@ import com.fulmar.firmware.model.TangoFirmwareNextFrameJson
 import com.google.gson.Gson
 import com.supermegazinc.escentials.waitForNextWithTimeout
 import com.supermegazinc.logger.Logger
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 
 suspend fun tangoFirmwareSender(
     onSendFirmwareTx: suspend (ByteArray) -> Boolean,
-    firmwareRx: Flow<ByteArray>,
+    firmwareRx: ReceiveChannel<ByteArray>,
     binary: List<ByteArray>,
     receiveTimeoutMs: Long,
     gson: Gson,
     logger: Logger,
-    LOG_KEY: String
+    LOG_KEY: String,
 ): Boolean {
 
     var lastFrameSent = 0
@@ -23,7 +28,9 @@ suspend fun tangoFirmwareSender(
         val expectedFrame = lastFrameSent+1
 
         val incomingMsg = try {
-            firmwareRx.waitForNextWithTimeout(receiveTimeoutMs)
+            withTimeout(receiveTimeoutMs) {
+                firmwareRx.receive()
+            }
         } catch (_: TimeoutCancellationException) {
             logger.e(LOG_KEY, "Timeout: No recibi nextFrame con frame: $expectedFrame")
             return false

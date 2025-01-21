@@ -31,6 +31,7 @@ import com.supermegazinc.security.cryptography.CryptographyController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -65,7 +66,7 @@ class TangoL1ControllerTestPiolaImpl(
 
     private val incomingMessages = MutableSharedFlow<Pair<UUID, ByteArray>>()
 
-    private val incomingFirmware = MutableSharedFlow<ByteArray>()
+    private val incomingFirmware = Channel<ByteArray>()
 
     private val _status = MutableStateFlow<TangoL1Status>(TangoL1Status.Disconnected)
     override val status = _status.asStateFlow()
@@ -308,7 +309,7 @@ class TangoL1ControllerTestPiolaImpl(
                 },
                 onReceiveFirmware = {
                     coroutineScope.launch {
-                        incomingFirmware.emit(it)
+                        incomingFirmware.send(it)
                     }
                 }
             )

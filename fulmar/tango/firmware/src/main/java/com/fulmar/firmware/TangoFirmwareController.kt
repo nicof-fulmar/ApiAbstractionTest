@@ -10,6 +10,8 @@ import com.supermegazinc.logger.Logger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +24,7 @@ import kotlinx.coroutines.launch
 class TangoFirmwareController(
     private val connected: Flow<Boolean>,
     private val onSendFirmware: suspend (ByteArray) -> Boolean,
-    private val firmwareRx: Flow<ByteArray>,
+    private val firmwareRx: ReceiveChannel<ByteArray>,
     private val onObtainFirmwareBinary: suspend () -> ByteArray?,
     private val logger: Logger,
     private val coroutineScope: CoroutineScope
