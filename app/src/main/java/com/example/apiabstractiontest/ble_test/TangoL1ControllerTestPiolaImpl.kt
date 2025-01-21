@@ -20,7 +20,6 @@ import com.fulmar.tango.trama.tramas.TramaTx
 import com.fulmar.tango.trama.tramas.toTicketUI
 import com.fulmar.tango.trama.tramas.toTrama
 import com.fulmar.tango.trama.tramas.toUI
-import com.google.gson.Gson
 import com.supermegazinc.ble_upgrade.BLEUpgradeController
 import com.supermegazinc.ble_upgrade.model.BLEUpgradeConnectionStatus
 import com.supermegazinc.escentials.Result
@@ -90,7 +89,22 @@ class TangoL1ControllerTestPiolaImpl(
 
     private val firmwareController = TangoFirmwareController(
         connected = _status.map{ it is TangoL1Status.Connected }.distinctUntilChanged(),
-        onSendFirmware = {
+        onSendFirmwareInit = {
+            val shared = sharedKeyFlow.value ?: run {
+                logger.e(LOG_KEY, "Error al obtener la clave compartida")
+                return@TangoFirmwareController false
+            }
+            val encrypted = cryptographyController.encrypt(it, shared) ?: run {
+                logger.e(LOG_KEY, "Error al encriptar")
+                return@TangoFirmwareController false
+            }
+            characteristicSendFirmware.value?.send(encrypted) ?: run {
+                logger.e(LOG_KEY, "No se pudo encontrar la caracteristica")
+                return@TangoFirmwareController false
+            }
+            true
+        },
+        onSendFirmwareFrame = {
             characteristicSendFirmware.value?.send(it) ?: run {
                 logger.e(LOG_KEY, "No se pudo encontrar la caracteristica")
                 return@TangoFirmwareController false

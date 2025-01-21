@@ -10,7 +10,6 @@ import com.supermegazinc.logger.Logger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -23,7 +22,8 @@ import kotlinx.coroutines.launch
 
 class TangoFirmwareController(
     private val connected: Flow<Boolean>,
-    private val onSendFirmware: suspend (ByteArray) -> Boolean,
+    private val onSendFirmwareInit: suspend (ByteArray) -> Boolean,
+    private val onSendFirmwareFrame: suspend (ByteArray) -> Boolean,
     private val firmwareRx: ReceiveChannel<ByteArray>,
     private val onObtainFirmwareBinary: suspend () -> ByteArray?,
     private val logger: Logger,
@@ -94,7 +94,7 @@ class TangoFirmwareController(
                     )
                     val gson = Gson()
                     val serializedFirmwareInit = gson.toJson(TangoFirmwareInitJson(firmwareInit)).toByteArray()
-                    if(!onSendFirmware(serializedFirmwareInit)) {
+                    if(!onSendFirmwareInit(serializedFirmwareInit)) {
                         logger.e(LOG_KEY, "Error al enviar la solicitud de actualizacion de firmware")
                         return@run
                     }
@@ -103,7 +103,7 @@ class TangoFirmwareController(
                     logger.d(LOG_KEY, "4. Espero peticion de NextFrame y comienzo el envio del firmware")
 
                     if(!tangoFirmwareSender(
-                            onSendFirmwareTx = { onSendFirmware(it) },
+                            onSendFirmwareFrame = { onSendFirmwareFrame(it) },
                             firmwareRx = firmwareRx,
                             binary = dividedFirmware,
                             receiveTimeoutMs = TangoFirmwareConfig.RECEIVE_TIMEOUT_MS,

@@ -2,18 +2,13 @@ package com.fulmar.firmware.util
 
 import com.fulmar.firmware.model.TangoFirmwareNextFrameJson
 import com.google.gson.Gson
-import com.supermegazinc.escentials.waitForNextWithTimeout
 import com.supermegazinc.logger.Logger
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 
 suspend fun tangoFirmwareSender(
-    onSendFirmwareTx: suspend (ByteArray) -> Boolean,
+    onSendFirmwareFrame: suspend (ByteArray) -> Boolean,
     firmwareRx: ReceiveChannel<ByteArray>,
     binary: List<ByteArray>,
     receiveTimeoutMs: Long,
@@ -50,7 +45,7 @@ suspend fun tangoFirmwareSender(
         }
 
         logger.d(LOG_KEY, "Enviando frame #$expectedFrame (${lastFrameSent*100/binary.size}%)")
-        if(!onSendFirmwareTx(binary[lastFrameSent])) {
+        if(!onSendFirmwareFrame(binary[lastFrameSent])) {
             logger.e(LOG_KEY,"No se pudo enviar el frame")
             return false
         }

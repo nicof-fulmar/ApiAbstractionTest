@@ -78,7 +78,11 @@ class TangoL1ControllerTestImpl(
 
     private val firmwareController = TangoFirmwareController(
         connected = _status.map{ it is TangoL1Status.Connected }.distinctUntilChanged(),
-        onSendFirmware = {
+        onSendFirmwareInit = {
+            firmwareTx.emit(it)
+            true
+        },
+        onSendFirmwareFrame = {
             firmwareTx.emit(it)
             true
         },
