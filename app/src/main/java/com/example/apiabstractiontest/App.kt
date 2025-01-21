@@ -37,26 +37,26 @@ class App: Application() {
 
         val coroutineScope = CoroutineScope(Dispatchers.IO)
 
-        //bleController = BLEControllerImpl(
-        //    context = applicationContext,
-        //    logger = logger,
-        //    coroutineScope = coroutineScope
-        //)
-        //val cryptographyController = CryptographyControllerImpl(
-        //    applicationContext,
-        //    logger
-        //)
-
-        val bleTestSuite = BLETestSuite(logger,coroutineScope)
-        bleController = BLEControllerTestImpl(
-            name = BLETestK.TANGO_BLE_NAME,
-            bleTestSuite,
-            coroutineScope
+        bleController = BLEControllerImpl(
+            context = applicationContext,
+            logger = logger,
+            coroutineScope = coroutineScope
         )
-        val cryptographyController = CryptographyControllerTestImpl(
+        val cryptographyController = CryptographyControllerImpl(
             applicationContext,
             logger
         )
+
+        //val bleTestSuite = BLETestSuite(logger,coroutineScope)
+        //bleController = BLEControllerTestImpl(
+        //    name = BLETestK.TANGO_BLE_NAME,
+        //    bleTestSuite,
+        //    coroutineScope
+        //)
+        //val cryptographyController = CryptographyControllerTestImpl(
+        //    applicationContext,
+        //    logger
+        //)
 
         bleUpgrade = BLEUpgradeControllerImpl(
             bleController,
@@ -80,7 +80,7 @@ class App: Application() {
          */
 
 
-        tangoL1Controller = TangoL1ControllerTestImpl(
+        tangoL1Controller = TangoL1ControllerTestPiolaImpl(
             bleUpgrade,
             cryptographyController,
             tangoSession,
