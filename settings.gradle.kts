@@ -1,12 +1,6 @@
 import java.io.FileInputStream
 import java.util.Properties
 
-include(":fulmar:tango:trama")
-
-
-include(":fulmar:tango:layer1")
-
-
 pluginManagement {
     repositories {
         google {
@@ -21,21 +15,14 @@ pluginManagement {
     }
 }
 
-val githubProperties = Properties()
-githubProperties.load(FileInputStream("./github.properties"))
-
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
         maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/supermegazinc/Android-Libraries")
-            credentials {
-                username = githubProperties["gpr.usr"] as String?
-                password = githubProperties["gpr.key"] as String?
-            }
+            name = "LocalRepository"
+            url = uri("/Repository")
         }
     }
 }
@@ -44,5 +31,8 @@ rootProject.name = "ApiAbstractionTest"
 include(":app")
 include(":supermegazinc:ble_upgrade")
 include(":fulmar:tango:session")
+include(":fulmar:tango:layer1")
+include(":fulmar:tango:trama")
+include(":fulmar:tango:firmware")
 include(":supermegazinc:security:diffie_hellman")
 include(":supermegazinc:security:cryptography")

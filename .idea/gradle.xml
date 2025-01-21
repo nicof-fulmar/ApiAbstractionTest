@@ -13,6 +13,7 @@
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/fulmar" />
             <option value="$PROJECT_DIR$/fulmar/tango" />
+            <option value="$PROJECT_DIR$/fulmar/tango/firmware" />
             <option value="$PROJECT_DIR$/fulmar/tango/layer1" />
             <option value="$PROJECT_DIR$/fulmar/tango/session" />
             <option value="$PROJECT_DIR$/fulmar/tango/trama" />

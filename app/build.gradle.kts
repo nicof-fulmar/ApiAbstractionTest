@@ -39,11 +39,13 @@ dependencies {
 
     implementation(libs.supermegazinc.escentials)
 
-    implementation(project(":supermegazinc:ble_upgrade"))
+    implementation(libs.supermegazinc.bleupgrade)
+    implementation(libs.supermegazinc.cryptography)
+
     implementation(project(":fulmar:tango:session"))
     implementation(project(":fulmar:tango:layer1"))
     implementation(project(":fulmar:tango:trama"))
-    implementation(project(":supermegazinc:security:cryptography"))
+    implementation(project(":fulmar:tango:firmware"))
 
 
     implementation(libs.androidx.core.ktx)

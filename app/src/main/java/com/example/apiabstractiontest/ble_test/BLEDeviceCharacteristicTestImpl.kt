@@ -26,10 +26,6 @@ class BLEDeviceCharacteristicTestImpl(
     override val message: StateFlow<ByteArray?>
         get() = _message.asStateFlow()
 
-    private val _messagee = MutableSharedFlow<ByteArray?>()
-    val messagee: SharedFlow<ByteArray?>
-        get() = _messagee.asSharedFlow()
-
     override val uuid: UUID
         get() = _uuid
 
@@ -51,8 +47,9 @@ class BLEDeviceCharacteristicTestImpl(
         notificationJob?.cancel()
         if(!state) return
         notificationJob = coroutineScope.launch {
+            delay(5000)
             while(isActive) {
-                _messagee.emit(value)
+                _message.emit(value)
                 delay(2000)
             }
         }

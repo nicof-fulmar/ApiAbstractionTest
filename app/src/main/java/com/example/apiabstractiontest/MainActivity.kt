@@ -14,12 +14,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         CoroutineScope(Dispatchers.IO).launch {
-            App.bleUpgrade.connect(
-                BLETestK.TANGO_BLE_NAME,
-                10000,
-                listOf(BLETestK.SERVICE_MAIN_UUID),
-                516
-            ).toString()
+            App.tangoL1Controller.connect(
+                BLETestK.TANGO_BLE_NAME
+            )
         }
     }
 }

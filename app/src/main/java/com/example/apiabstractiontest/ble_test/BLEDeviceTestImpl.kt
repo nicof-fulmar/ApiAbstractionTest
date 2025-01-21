@@ -1,6 +1,7 @@
 package com.example.apiabstractiontest.ble_test
 
 import android.util.Log
+import com.fulmar.tango.layer1.config.TangoL1Config
 import com.supermegazinc.ble.adapter.BLEAdapter
 import com.supermegazinc.ble.adapter.model.BLEAdapterState
 import com.supermegazinc.ble.device.BLEDevice
@@ -131,6 +132,24 @@ class BLEDeviceTestImpl(
     override suspend fun disconnect() {
         clear()
         _status.update { BLEDeviceStatus.Disconnected(BLEDisconnectionReason.DISCONNECTED) }
+    }
+
+    override fun discoverServices() {
+        _characteristics.update { actualCharacteristics->
+            actualCharacteristics + BLEDeviceCharacteristicTestImpl(
+                _uuid = TangoL1Config.CHARACTERISTIC_RECEIVE_PROGRAMACION,
+                value = null,
+                coroutineScope = coroutineScope
+            ) + BLEDeviceCharacteristicTestImpl(
+                _uuid = TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE,
+                value = null,
+                coroutineScope = coroutineScope
+            ) + BLEDeviceCharacteristicTestImpl(
+                _uuid = TangoL1Config.CHARACTERISTIC_SEND_FIRMWARE,
+                value = null,
+                coroutineScope = coroutineScope
+            )
+        }
     }
 
     private suspend fun observeAdapter() {

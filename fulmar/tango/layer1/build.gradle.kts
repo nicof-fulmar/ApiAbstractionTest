@@ -4,49 +4,38 @@ plugins {
 }
 
 android {
-    namespace = "com.fulmar.layer1"
+
+    namespace = "com.fulmar.${project.name}"
     compileSdk = 35
 
     defaultConfig {
         minSdk = 21
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles("consumer-rules.pro")
     }
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "1.8"
     }
+
 }
 
 dependencies {
 
-    implementation(project(":supermegazinc:ble_upgrade"))
-    implementation(project(":supermegazinc:security:cryptography"))
-    implementation(project(":fulmar:tango:session"))
     implementation(libs.supermegazinc.logger)
     implementation(libs.supermegazinc.escentials)
-    implementation(libs.supermegazinc.ble)
 
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    implementation(project(":fulmar:tango:trama"))
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
+
     implementation(libs.kotlin.reflect)
+
+    implementation(libs.supermegazinc.bleupgrade)
+    implementation(libs.supermegazinc.cryptography)
+    implementation(project(":fulmar:tango:session"))
+    implementation(project(":fulmar:tango:trama"))
+    implementation(project(":fulmar:tango:firmware"))
+
 }
