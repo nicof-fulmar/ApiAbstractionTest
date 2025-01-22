@@ -58,6 +58,7 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    
 
     //Permite acceder a los datos de las clases
     implementation(libs.kotlin.reflect)

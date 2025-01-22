@@ -1,6 +1,7 @@
 package com.example.apiabstractiontest
 
 import android.app.Application
+import com.example.apiabstractiontest.ble_test.BLEUpgradeControllerTestImpl
 import com.example.apiabstractiontest.ble_test.TangoL1ControllerTestConexionImpl
 import com.example.apiabstractiontest.ble_test.TangoL1ControllerTestPiolaImpl
 import com.fulmar.tango.layer1.TangoL1Controller
@@ -36,7 +37,7 @@ class App: Application() {
         bleController = BLEControllerImpl(
             context = applicationContext,
             logger = logger,
-            coroutineContext = coroutineScope.coroutineContext
+            coroutineScope = coroutineScope
         )
         val cryptographyController = CryptographyControllerImpl(
             applicationContext,
