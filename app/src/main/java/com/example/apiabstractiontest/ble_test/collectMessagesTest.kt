@@ -33,13 +33,13 @@ fun Flow<List<BLEDeviceCharacteristic>>.messageTest(uuid: UUID): Flow<ByteArray>
             characteristic
                 .message
                 .consumeAsFlow()
-                .filterNotNull().also { flow->
-                    CoroutineScope(Dispatchers.IO).launch {
-                        flow.collectLatest {
-                            println("MENSAJE: " + it.toList())
-                        }
-                    }
-                }
+                .filterNotNull()
         }
-        .flattenConcat()
+        .flattenConcat().also { flow->
+            CoroutineScope(Dispatchers.IO).launch {
+                flow.collectLatest {
+                    println("MENSAJE: " + it.toList())
+                }
+            }
+        }
 }
