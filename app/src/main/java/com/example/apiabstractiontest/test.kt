@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -136,13 +137,19 @@ fun main() {
     val firmware = Channel<ByteArray>(capacity = 100, onBufferOverflow = BufferOverflow.SUSPEND)
 
     runBlocking {
-        firmware.send("hola".toByteArray())
-        firmware.send("como".toByteArray())
-        firmware.send("estas".toByteArray())
-        firmware.consumeAsFlow().collect { message->
-            delay(1000)
-            println(message.decodeToString())
+        launch {
+            firmware.consumeAsFlow().collect { message->
+                delay(1000)
+                println(message.decodeToString())
+            }
+            println("done")
         }
-        while (true) {}
+        launch {
+            firmware.send("hola".toByteArray())
+            firmware.send("como".toByteArray())
+            firmware.send("estas".toByteArray())
+            delay(1000)
+            firmware.send("aaa".toByteArray())
+        }
     }
 }
