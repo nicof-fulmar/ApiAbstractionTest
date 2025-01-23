@@ -51,7 +51,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class TangoL1ControllerTestFirmwareImpl(
     private val bleUpgradeController: BLEUpgradeController,
     private val cryptographyController: CryptographyController,

@@ -69,7 +69,7 @@ class TangoL1IncomingMessageProcessor(
             }
         }
         coroutineScope.launch {
-            telemetryRaw.receiveAsFlow().collect() { message->
+            telemetryRaw.receiveAsFlow().collect { message->
                 logger.d(LOG_KEY, "onReceiveRawTelemetry")
 
                 val shared = sharedKey.value ?: run {
