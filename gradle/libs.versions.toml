@@ -14,8 +14,8 @@ activityCompose = "1.9.3"
 
 supermegazincLogger = "2.1"
 supermegazincEssentials = "2.2"
-supermegazincBle = "2.9.8"
-supermegazincBleUpgrade = "1.3"
+supermegazincBle = "3.0.0"
+supermegazincBleUpgrade = "3.0.0-1.0.0"
 supermegazincCrypto = "1.1"
 supermegazincDiffieHellman = "1.0"
 

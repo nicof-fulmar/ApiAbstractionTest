@@ -1,13 +1,11 @@
 package com.example.apiabstractiontest.ble_test
 
 import android.content.Context
-import com.example.apiabstractiontest.R
-import com.fulmar.firmware.TangoFirmwareController
 import com.fulmar.tango.layer1.TangoL1Controller
 import com.fulmar.tango.layer1.config.TangoL1Config
+import com.fulmar.tango.layer1.feature_incoming_message.TangoL1IncomingMessageProcessor
 import com.fulmar.tango.layer1.models.TangoL1Status
 import com.fulmar.tango.layer1.models.TangoL1Telemetry
-import com.fulmar.tango.layer1.service.tangoL1IncomingMessageProcessorService
 import com.fulmar.tango.layer1.service.tangoL1SessionService
 import com.fulmar.tango.session.TangoSessionController
 import com.fulmar.tango.trama.controllers.TramaController
@@ -22,6 +20,7 @@ import com.fulmar.tango.trama.tramas.toTrama
 import com.fulmar.tango.trama.tramas.toUI
 import com.supermegazinc.ble_upgrade.BLEUpgradeController
 import com.supermegazinc.ble_upgrade.model.BLEUpgradeConnectionStatus
+import com.supermegazinc.ble_upgrade.utils.collectMessages
 import com.supermegazinc.escentials.Status
 import com.supermegazinc.escentials.firstWithTimeout
 import com.supermegazinc.logger.Logger
@@ -30,19 +29,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -50,7 +44,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.UUID
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TangoL1ControllerTestConexionImpl(
@@ -67,10 +60,6 @@ class TangoL1ControllerTestConexionImpl(
         const val LOG_KEY = "TANGO-L1"
     }
 
-    private val incomingMessages = MutableSharedFlow<Pair<UUID, ByteArray>>()
-
-    private val incomingFirmware = Channel<ByteArray>()
-
     private val _status = MutableStateFlow<TangoL1Status>(TangoL1Status.Disconnected)
     override val status = _status.asStateFlow()
 
@@ -83,6 +72,46 @@ class TangoL1ControllerTestConexionImpl(
             SharingStarted.Eagerly,
             null
         )
+
+    val incomingMessageProcessor = TangoL1IncomingMessageProcessor(
+        tramaController = TramaControllerImpl(),
+        cryptographyController = cryptographyController,
+        sharedKey = sharedKeyFlow,
+        logger = logger,
+        onSendTelemetry = { message ->
+            logger.i(LOG_KEY, "Enviando: \n${message.toList()}")
+            coroutineScope.launch {
+                bleUpgradeController.characteristics
+                    .value
+                    .firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_TELEMETRY_UUID }
+                    ?.send(message)
+            }
+        },
+        onReceiveTelemetry = { trama ->
+            logger.i(LOG_KEY, "Telemetria recibida: \n${trama}")
+
+            when (trama) {
+                is ScabRx -> {
+                    _telemetry.update {
+                        it.copy(scab = trama.toUI())
+                    }
+                }
+
+                is SimpRx -> {
+                    _telemetry.update {
+                        it.copy(
+                            simpSummary = trama.toUI(),
+                            simpTicket = trama.toTicketUI()
+                        )
+                    }
+                }
+            }
+        },
+        onReceiveFirmware = {
+
+        },
+        coroutineScope = coroutineScope
+    )
 
     private var newSessionJob: Job? = null
     private fun newSession() {
@@ -246,103 +275,27 @@ class TangoL1ControllerTestConexionImpl(
         }
 
         coroutineScope.launch {
-            tangoL1IncomingMessageProcessorService(
-                messages = incomingMessages,
-                tramaController = TramaControllerImpl(),
-                cryptographyController = cryptographyController,
-                sharedKey = sharedKeyFlow,
-                logger = logger,
-                onSendTelemetry = { message ->
-                    logger.i(LOG_KEY, "Enviando: \n${message.toList()}")
-                    launch {
-                        bleUpgradeController.characteristics
-                            .value
-                            .firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_TELEMETRY_UUID }
-                            ?.send(message)
-                    }
-                },
-                onReceiveTelemetry = { trama ->
-                    logger.i(LOG_KEY, "Recibido: \n${trama}")
-
-                    when (trama) {
-                        is ScabRx -> {
-                            _telemetry.update {
-                                it.copy(scab = trama.toUI())
-                            }
+            bleUpgradeController
+                .status
+                .filter { it == BLEUpgradeConnectionStatus.Connected }
+                .collectLatest { _->
+                    coroutineScope {
+                        launch {
+                            bleUpgradeController
+                                .characteristics
+                                .collectMessages(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY_UUID) {incomingMsg->
+                                    incomingMessageProcessor.onReceiveRawTelemetry(incomingMsg)
+                                }
                         }
-
-                        is SimpRx -> {
-                            _telemetry.update {
-                                it.copy(
-                                    simpSummary = trama.toUI(),
-                                    simpTicket = trama.toTicketUI()
-                                )
-                            }
+                        launch {
+                            bleUpgradeController
+                                .characteristics
+                                .collectMessages(TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE) {incomingMsg->
+                                    incomingMessageProcessor.onReceiveRawFirmware(incomingMsg)
+                                }
                         }
-                    }
-                },
-                onReceiveFirmware = {
-                    coroutineScope.launch {
-                        incomingFirmware.send(it)
                     }
                 }
-            )
-        }
-
-        coroutineScope.launch {
-            coroutineScope {
-                bleUpgradeController
-                    .status
-                    .filter { it == BLEUpgradeConnectionStatus.Connected }
-                    .collectLatest { _->
-                        coroutineScope {
-                            launch {
-                                bleUpgradeController
-                                    .characteristics
-                                    .mapNotNull { characteristics->
-                                        characteristics.firstOrNull {
-                                            it.uuid == TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY_UUID
-                                        }
-                                    }
-                                    .distinctUntilChanged { old, new->
-                                        old === new
-                                    }
-                                    .flatMapLatest { characteristic->
-                                        characteristic.setNotification(true)
-                                        characteristic
-                                            .message
-                                            .consumeAsFlow()
-                                            .filterNotNull()
-                                    }
-                                    .collect { incomingMsg->
-                                        incomingMessages.emit(Pair(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY_UUID, incomingMsg))
-                                    }
-                            }
-                            launch {
-                                bleUpgradeController
-                                    .characteristics
-                                    .mapNotNull { characteristics->
-                                        characteristics.firstOrNull {
-                                            it.uuid == TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE
-                                        }
-                                    }
-                                    .distinctUntilChanged { old, new->
-                                        old === new
-                                    }
-                                    .flatMapLatest { characteristic->
-                                        characteristic.setNotification(true)
-                                        characteristic
-                                            .message
-                                            .consumeAsFlow()
-                                            .filterNotNull()
-                                    }
-                                    .collect { incomingMsg->
-                                        incomingMessages.emit(Pair(TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE, incomingMsg))
-                                    }
-                            }
-                        }
-                    }
-            }
         }
 
         coroutineScope.launch {

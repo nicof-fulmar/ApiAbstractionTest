@@ -1,7 +1,6 @@
 package com.fulmar.tango.trama.utils
 
 import com.fulmar.tango.trama.controllers.TramaController
-import com.fulmar.tango.trama.controllers.TramaControllerImpl
 import com.fulmar.tango.trama.tramas.Header
 import com.fulmar.tango.trama.tramas.HeaderUI
 import com.fulmar.tango.trama.tramas.toUI

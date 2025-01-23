@@ -1,19 +1,13 @@
 package com.fulmar.tango.session
 
 import com.fulmar.tango.session.model.TangoSession
-import com.supermegazinc.ble_upgrade.BLEUpgradeController
-import com.supermegazinc.security.diffie_hellman.DiffieHellmanController
-import com.supermegazinc.escentials.Result
 import com.supermegazinc.escentials.Status
 import com.supermegazinc.logger.Logger
+import com.supermegazinc.security.diffie_hellman.DiffieHellmanController
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
-import java.util.UUID
 
 class TangoSessionControllerImpl(
     private val logger: Logger

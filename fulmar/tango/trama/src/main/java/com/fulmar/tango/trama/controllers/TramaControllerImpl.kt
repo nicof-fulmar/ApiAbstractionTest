@@ -1,6 +1,5 @@
 package com.fulmar.tango.trama.controllers
 
-import android.util.Log
 import com.supermegazinc.logger.Logger
 import com.supermegazinc.logger.LoggerCustom
 import kotlin.reflect.KMutableProperty1

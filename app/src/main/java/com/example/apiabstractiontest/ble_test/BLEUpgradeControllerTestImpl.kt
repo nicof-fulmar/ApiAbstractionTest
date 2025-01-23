@@ -34,7 +34,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.UUID
 import kotlin.coroutines.CoroutineContext
-import kotlin.math.log
 
 class BLEUpgradeControllerTestImpl(
     private val bleController: BLEController,

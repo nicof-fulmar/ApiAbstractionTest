@@ -2,24 +2,23 @@ package com.example.apiabstractiontest
 
 import com.supermegazinc.ble.device.model.BLEDeviceStatus
 import com.supermegazinc.ble.gatt.model.BLEDisconnectionReason
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlin.coroutines.coroutineContext
 
 class BLEDevice() {
 
@@ -72,11 +71,45 @@ class BLEUpgradeController() {
     }
 }
 
+val flow1 = flow<String> {
+    var str = "+"
+    while(coroutineContext.isActive) {
+        emit(str)
+        str+="+"
+        delay(5000)
+    }
+}
+
+val flow2 = flow<String> {
+    var str = "1"
+    while(coroutineContext.isActive) {
+        emit(str)
+        str+="1"
+        delay(1000)
+    }
+}
+
+suspend fun doSomething() {
+    flow1.collectLatest {
+        flow2.collectLatest { one ->
+            println(one)
+        }
+    }
+}
+
+var doSomething2Job: Job? = null
+suspend fun doSomething2() {
+    doSomething2Job?.cancel()
+    doSomething2Job = CoroutineScope(Dispatchers.IO).launch {
+        launch { doSomething() }
+        launch { doSomething() }
+        launch { doSomething() }
+    }
+}
+
+
 fun main() {
     /*
-        BLEUpgradeController()
-    runBlocking { while(true) {} }
-     */
 
     val coroutineScope = CoroutineScope(Dispatchers.IO)
     coroutineScope.coroutineContext[Job]?.invokeOnCompletion {
@@ -95,5 +128,14 @@ fun main() {
         println("TaskCoroutine: " + it)
     }
 
-    runBlocking { while(true) {} }
+     */
+
+
+
+    runBlocking {
+        launch { doSomething2() }
+        delay(3000)
+        launch { doSomething2() }
+        while (true) {}
+    }
 }
