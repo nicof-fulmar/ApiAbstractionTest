@@ -1,11 +1,16 @@
 package com.example.apiabstractiontest
 
 import com.example.apiabstractiontest.ble_test.BLEDeviceCharacteristicTestImpl
+import com.example.apiabstractiontest.ble_test.BLEDeviceTestImpl
+import com.example.apiabstractiontest.ble_test.BLETestSuite
 import com.example.apiabstractiontest.ble_test.messageTest
 import com.fulmar.tango.layer1.config.TangoL1Config
 import com.supermegazinc.ble.device.characteristic.BLEDeviceCharacteristic
 import com.supermegazinc.ble.device.model.BLEDeviceStatus
 import com.supermegazinc.ble.gatt.model.BLEDisconnectionReason
+import com.supermegazinc.logger.Logger
+import com.supermegazinc.logger.LoggerCustom
+import com.supermegazinc.logger.LoggerImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -30,6 +35,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlin.coroutines.coroutineContext
+import kotlin.math.log
 
 class BLEDevice() {
 
@@ -118,38 +124,55 @@ suspend fun doSomething2() {
     }
 }
 
+class LoggerCustom2: Logger {
+    override fun d(tag: String?, message: String) {
+        println("[D] - $tag - $message")
+    }
+
+    override fun e(tag: String?, message: String) {
+        println("[E] - $tag - $message")
+    }
+
+    override fun i(tag: String?, message: String) {
+        println("[I] - $tag - $message")
+    }
+}
 
 fun main() {
 
-    val _characteristics = MutableStateFlow<List<BLEDeviceCharacteristic>>(emptyList())
-    val characteristics = _characteristics.asStateFlow()
+    //val logger = LoggerCustom2()
+    //val bleTestSuite = BLETestSuite(
+    //    logger,
+    //    CoroutineScope(Dispatchers.Default)
+    //)
+    //val bleDevice: com.supermegazinc.ble.device.BLEDevice = BLEDeviceTestImpl(
+    //    mac = "abc123",
+    //    name = "ble",
+    //    mtu = 516,
+    //    logger = logger,
+    //    bleTestSuite = bleTestSuite,
+    //    coroutineContext = CoroutineScope(Dispatchers.Default).coroutineContext
+    //)
+//
+    //runBlocking {
+    //    launch {
+    //        launch {
+    //            bleDevice.characteristics.messageTest(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY_UUID).collect { message->
+    //                println(message)
+    //            }
+    //        }
+    //        launch {
+    //            bleDevice.characteristics.collect {
+    //                println("Caracteristica: " + it)
+    //            }
+    //        }
+    //        launch {
+    //            bleDevice.connect()
+    //        }
+    //    }.join()
+    //}
 
-    runBlocking {
-        launch {
-            launch {
-                characteristics.messageTest(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY_UUID).collect { message->
-                    println(message)
-                }
-            }
-            launch {
-                characteristics.collect {
-                    println("Caracteristica: " + it)
-                }
-            }
-            launch {
-                delay(1000)
-                while(isActive) {
-                    _characteristics.emit(listOf(BLEDeviceCharacteristicTestImpl(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY_UUID)))
-                    delay(1000)
-                    _characteristics.update { it + BLEDeviceCharacteristicTestImpl(TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE) }
-                    delay(5000)
-                    _characteristics.update {
-                        it.forEach {char-> char.close()}
-                        emptyList()
-                    }
-                    delay(5000)
-                }
-            }
-        }.join()
-    }
+    val set1 = setOf(1,5,7,2)
+    val set2 = setOf(2,5,7,1)
+    println(set1==set2)
 }

@@ -1,5 +1,6 @@
 package com.example.apiabstractiontest.ble_test
 
+import com.fulmar.tango.layer1.config.TangoL1Config
 import com.supermegazinc.ble.device.characteristic.BLEDeviceCharacteristic
 import com.supermegazinc.ble.device.service.BLEDeviceService
 import com.supermegazinc.ble.gatt.model.BLEMessageEvent
@@ -10,6 +11,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class BLETestSuite(
@@ -25,26 +27,25 @@ class BLETestSuite(
     val gattConnectionChannel = Channel<BLESessionConnectionEvent>(capacity = Channel.CONFLATED)
 
     val characteristics = MutableStateFlow<List<BLEDeviceCharacteristic>>(emptyList())
+    private val hiddenServices = MutableStateFlow<List<BLEDeviceService>>(emptyList())
     val services = MutableStateFlow<List<BLEDeviceService>>(emptyList())
 
-    private var gattStartSessionJob: Job? = null
-    fun gattStartSession() {
-        gattStartSessionJob?.cancel()
-        gattStartSessionJob = coroutineScope.launch {
-            delay(2000)
-            gattConnectionChannel.send(BLESessionConnectionEvent.CONNECTED)
-            delay(3000)
-            services.emit(
-                listOf(
-                    BLEDeviceServiceTestImpl(BLETestK.SERVICE_MAIN_UUID)
-                )
-            )
-            characteristics.emit(
-                listOf(
-
-                )
+    fun onConnectGatt() {
+        characteristics.update {
+            listOf(
+                BLEDeviceCharacteristicTestImpl(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY_UUID),
+                BLEDeviceCharacteristicTestImpl(TangoL1Config.CHARACTERISTIC_RECEIVE_KEY_UUID)
             )
         }
+        hiddenServices.update {
+            listOf(
+                BLEDeviceServiceTestImpl(TangoL1Config.SERVICE_MAIN_UUID)
+            )
+        }
+    }
+
+    fun onDiscoverServices() {
+        services.update { hiddenServices.value }
     }
 
 }
