@@ -1,6 +1,8 @@
 package com.example.apiabstractiontest.ble_test
 
 import android.content.Context
+import com.example.apiabstractiontest.R
+import com.fulmar.firmware.TangoFirmwareController
 import com.fulmar.tango.layer1.TangoL1Controller
 import com.fulmar.tango.layer1.config.TangoL1Config
 import com.fulmar.tango.layer1.feature_incoming_message.TangoL1IncomingMessageProcessor
@@ -50,7 +52,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class TangoL1ControllerTestConexionImpl(
+class TangoL1ControllerTestFirmwareImpl(
     private val bleUpgradeController: BLEUpgradeController,
     private val cryptographyController: CryptographyController,
     private val tangoSessionController: TangoSessionController,
@@ -88,6 +90,20 @@ class TangoL1ControllerTestConexionImpl(
             null
         )
 
+    private val characteristicSendFirmware = bleUpgradeController
+        .characteristics
+        .mapNotNull { characteristics->
+            characteristics.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_TELEMETRY_UUID }
+        }
+        .distinctUntilChanged { old, new ->
+            old === new
+        }
+        .stateIn(
+            coroutineScope,
+            SharingStarted.Eagerly,
+            null
+        )
+
     private val firmwareRaw = Channel<ByteArray>(capacity = 100, onBufferOverflow = BufferOverflow.SUSPEND)
     private val telemetryRaw = Channel<ByteArray>(Channel.CONFLATED)
 
@@ -96,12 +112,46 @@ class TangoL1ControllerTestConexionImpl(
         telemetryRaw = telemetryRaw,
         onSendAck = {ack->
             coroutineScope.launch {
-                characteristicSendTelemetry.value?.send(ack) ?: logger.e(LOG_KEY, "No se pudo enviar ack: No existe la caracteristica")
+                characteristicSendTelemetry.value?.send(ack) ?: logger.e(LOG_KEY, "[onSendAck] - No se pudo encontrar la caracteristica")
             }
         },
         tramaController = TramaControllerImpl(),
         cryptographyController = cryptographyController,
         sharedKey = sharedKeyFlow,
+        logger = logger,
+        coroutineScope = coroutineScope
+    )
+
+    private val firmwareController = TangoFirmwareController(
+        connected = bleUpgradeController.status.map {it == BLEUpgradeConnectionStatus.Connected},
+        onSendFirmwareInit = { message->
+            val shared = sharedKeyFlow.value ?: run {
+                logger.e(LOG_KEY, "[onSendFirmwareInit] - Error al obtener la clave compartida")
+                return@TangoFirmwareController false
+            }
+
+            val encryptedMsg = cryptographyController.encrypt(message, shared) ?: run {
+                logger.e(LOG_KEY, "[onSendFirmwareInit] - Error al encriptar el ack")
+                return@TangoFirmwareController false
+            }
+            characteristicSendFirmware.value?.send(encryptedMsg) ?: run {
+                logger.e(LOG_KEY, "[onSendFirmwareInit] - No se pudo encontrar la caracteristica")
+                return@TangoFirmwareController false
+            }
+            return@TangoFirmwareController true
+        },
+        onSendFirmwareFrame = { message->
+            characteristicSendFirmware.value?.send(message) ?: run {
+                logger.e(LOG_KEY, "[onSendFirmwareFrame] - No se pudo encontrar la caracteristica")
+                return@TangoFirmwareController false
+            }
+            return@TangoFirmwareController true
+        },
+        firmwareRx = incomingMessageProcessor.firmware,
+        onObtainFirmwareBinary = {
+            delay(1000)
+            return@TangoFirmwareController context.resources.openRawResource(R.raw.firmware).readBytes()
+        },
         logger = logger,
         coroutineScope = coroutineScope
     )
@@ -177,6 +227,9 @@ class TangoL1ControllerTestConexionImpl(
                             "PUBLIC[${session.myPublicKey.size}]: ${session.myPublicKey}\n" +
                             "SHARED[${session.sharedKey.size}]: ${session.sharedKey}"
                     )
+
+                    firmwareController.setTangoVersion("1.0.3")
+                    firmwareController.setApiVersion("1.0.5")
 
                     return@run true
 

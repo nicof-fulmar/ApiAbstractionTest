@@ -5,12 +5,15 @@ import com.supermegazinc.ble.gatt.model.BLEDisconnectionReason
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flow
@@ -130,12 +133,16 @@ fun main() {
 
      */
 
-
+    val firmware = Channel<ByteArray>(capacity = 100, onBufferOverflow = BufferOverflow.SUSPEND)
 
     runBlocking {
-        launch { doSomething2() }
-        delay(3000)
-        launch { doSomething2() }
+        firmware.send("hola".toByteArray())
+        firmware.send("como".toByteArray())
+        firmware.send("estas".toByteArray())
+        firmware.consumeAsFlow().collect { message->
+            delay(1000)
+            println(message.decodeToString())
+        }
         while (true) {}
     }
 }
