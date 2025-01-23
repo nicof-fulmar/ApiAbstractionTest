@@ -278,14 +278,16 @@ class TangoL1ControllerTestConexionImpl(
                         launch {
                             bleUpgradeController
                                 .characteristics
-                                .collectMessages(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY_UUID) {incomingMsg->
+                                .messageTest(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY_UUID)
+                                .collect {incomingMsg->
                                     telemetryRaw.send(incomingMsg)
                                 }
                         }
                         launch {
                             bleUpgradeController
                                 .characteristics
-                                .collectMessages(TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE) {incomingMsg->
+                                .messageTest(TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE)
+                                .collect {incomingMsg->
                                     firmwareRaw.send(incomingMsg)
                                 }
                         }
