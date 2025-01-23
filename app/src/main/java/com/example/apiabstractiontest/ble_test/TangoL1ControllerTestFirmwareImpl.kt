@@ -22,7 +22,6 @@ import com.fulmar.tango.trama.tramas.toTrama
 import com.fulmar.tango.trama.tramas.toUI
 import com.supermegazinc.ble_upgrade.BLEUpgradeController
 import com.supermegazinc.ble_upgrade.model.BLEUpgradeConnectionStatus
-import com.supermegazinc.ble_upgrade.utils.collectMessages
 import com.supermegazinc.escentials.Status
 import com.supermegazinc.escentials.firstWithTimeout
 import com.supermegazinc.logger.Logger
@@ -321,29 +320,7 @@ class TangoL1ControllerTestFirmwareImpl(
             )
         }
 
-        coroutineScope.launch {
-            bleUpgradeController
-                .status
-                .filter { it == BLEUpgradeConnectionStatus.Connected }
-                .collectLatest { _->
-                    coroutineScope {
-                        launch {
-                            bleUpgradeController
-                                .characteristics
-                                .collectMessages(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY_UUID) {incomingMsg->
-                                    telemetryRaw.send(incomingMsg)
-                                }
-                        }
-                        launch {
-                            bleUpgradeController
-                                .characteristics
-                                .collectMessages(TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE) {incomingMsg->
-                                    firmwareRaw.send(incomingMsg)
-                                }
-                        }
-                    }
-                }
-        }
+        //MENSAJES
 
         coroutineScope.launch {
             bleUpgradeController

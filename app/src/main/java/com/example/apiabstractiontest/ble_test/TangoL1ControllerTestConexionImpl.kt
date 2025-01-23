@@ -20,7 +20,6 @@ import com.fulmar.tango.trama.tramas.toTrama
 import com.fulmar.tango.trama.tramas.toUI
 import com.supermegazinc.ble_upgrade.BLEUpgradeController
 import com.supermegazinc.ble_upgrade.model.BLEUpgradeConnectionStatus
-import com.supermegazinc.ble_upgrade.utils.collectMessages
 import com.supermegazinc.escentials.Status
 import com.supermegazinc.escentials.firstWithTimeout
 import com.supermegazinc.logger.Logger
