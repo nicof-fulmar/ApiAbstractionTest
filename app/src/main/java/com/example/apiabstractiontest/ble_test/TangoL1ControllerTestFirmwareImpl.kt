@@ -7,19 +7,14 @@ import com.fulmar.tango.layer1.TangoL1Controller
 import com.fulmar.tango.layer1.config.TangoL1Config
 import com.fulmar.tango.layer1.feature_incoming_message.TangoL1IncomingMessageProcessor
 import com.fulmar.tango.layer1.models.TangoL1Status
-import com.fulmar.tango.layer1.models.TangoL1Telemetry
 import com.fulmar.tango.layer1.service.tangoL1SessionService
 import com.fulmar.tango.session.TangoSessionController
 import com.fulmar.tango.trama.controllers.TramaController
 import com.fulmar.tango.trama.controllers.TramaControllerImpl
 import com.fulmar.tango.trama.models.Commands
 import com.fulmar.tango.trama.tramas.HeaderUI
-import com.fulmar.tango.trama.tramas.ScabRx
-import com.fulmar.tango.trama.tramas.SimpRx
 import com.fulmar.tango.trama.tramas.TramaTx
-import com.fulmar.tango.trama.tramas.toTicketUI
 import com.fulmar.tango.trama.tramas.toTrama
-import com.fulmar.tango.trama.tramas.toUI
 import com.supermegazinc.ble_upgrade.BLEUpgradeController
 import com.supermegazinc.ble_upgrade.model.BLEUpgradeConnectionStatus
 import com.supermegazinc.escentials.Status
@@ -27,12 +22,10 @@ import com.supermegazinc.escentials.firstWithTimeout
 import com.supermegazinc.logger.Logger
 import com.supermegazinc.security.cryptography.CryptographyController
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -41,7 +34,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -77,7 +69,7 @@ class TangoL1ControllerTestFirmwareImpl(
     private val characteristicSendTelemetry = bleUpgradeController
         .characteristics
         .mapNotNull { characteristics->
-            characteristics.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_TELEMETRY_UUID }
+            characteristics.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_TELEMETRY }
         }
         .distinctUntilChanged { old, new ->
             old === new
@@ -91,7 +83,7 @@ class TangoL1ControllerTestFirmwareImpl(
     private val characteristicSendFirmware = bleUpgradeController
         .characteristics
         .mapNotNull { characteristics->
-            characteristics.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_TELEMETRY_UUID }
+            characteristics.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_TELEMETRY }
         }
         .distinctUntilChanged { old, new ->
             old === new
@@ -178,7 +170,7 @@ class TangoL1ControllerTestFirmwareImpl(
                     logger.d(LOG_KEY,"Buscando caracteristica 'ReceivePublicKey'..")
                     val receiveCharacteristic = bleUpgradeController
                         .characteristics
-                        .map { it.firstOrNull {char-> TangoL1Config.CHARACTERISTIC_RECEIVE_KEY_UUID == char.uuid} }
+                        .map { it.firstOrNull {char-> TangoL1Config.CHARACTERISTIC_RECEIVE_KEY == char.uuid} }
                         .filterNotNull()
                         .firstWithTimeout(5000)
                     logger.d(LOG_KEY,"Encontrada, solicitando clave publica..")
@@ -198,7 +190,7 @@ class TangoL1ControllerTestFirmwareImpl(
                     logger.d(LOG_KEY,"Buscando caracteristica 'SendPublicKey'..")
                     val sendCharacteristic = bleUpgradeController
                         .characteristics
-                        .mapNotNull { it.firstOrNull {char-> TangoL1Config.CHARACTERISTIC_SEND_KEY_UUID == char.uuid} }
+                        .mapNotNull { it.firstOrNull {char-> TangoL1Config.CHARACTERISTIC_SEND_KEY == char.uuid} }
                         .filterNotNull()
                         .firstWithTimeout(5000)
                     logger.d(LOG_KEY,"Encontrada, enviando clave publica [${publicKey.size}]: ${publicKey.toList()}")
@@ -255,7 +247,7 @@ class TangoL1ControllerTestFirmwareImpl(
             val result = bleUpgradeController.connect(
                 name = name,
                 timeoutMillis = TangoL1Config.CONNECTION_TIMEOUT,
-                servicesUUID = listOf(TangoL1Config.SERVICE_MAIN_UUID),
+                servicesUUID = listOf(TangoL1Config.SERVICE_MAIN),
                 mtu = 516
             )
             if(!result) {
@@ -288,7 +280,7 @@ class TangoL1ControllerTestFirmwareImpl(
                 return@withContext
             }
 
-            val sendCharacteristic = bleUpgradeController.characteristics.value.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_TELEMETRY_UUID } ?: run {
+            val sendCharacteristic = bleUpgradeController.characteristics.value.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_TELEMETRY } ?: run {
                 logger.e(LOG_KEY, "Error al encontrar la caracteristica")
                 return@withContext
             }

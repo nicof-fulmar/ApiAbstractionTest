@@ -5,19 +5,14 @@ import com.fulmar.tango.layer1.TangoL1Controller
 import com.fulmar.tango.layer1.config.TangoL1Config
 import com.fulmar.tango.layer1.feature_incoming_message.TangoL1IncomingMessageProcessor
 import com.fulmar.tango.layer1.models.TangoL1Status
-import com.fulmar.tango.layer1.models.TangoL1Telemetry
 import com.fulmar.tango.layer1.service.tangoL1SessionService
 import com.fulmar.tango.session.TangoSessionController
 import com.fulmar.tango.trama.controllers.TramaController
 import com.fulmar.tango.trama.controllers.TramaControllerImpl
 import com.fulmar.tango.trama.models.Commands
 import com.fulmar.tango.trama.tramas.HeaderUI
-import com.fulmar.tango.trama.tramas.ScabRx
-import com.fulmar.tango.trama.tramas.SimpRx
 import com.fulmar.tango.trama.tramas.TramaTx
-import com.fulmar.tango.trama.tramas.toTicketUI
 import com.fulmar.tango.trama.tramas.toTrama
-import com.fulmar.tango.trama.tramas.toUI
 import com.supermegazinc.ble_upgrade.BLEUpgradeController
 import com.supermegazinc.ble_upgrade.model.BLEUpgradeConnectionStatus
 import com.supermegazinc.escentials.Status
@@ -39,7 +34,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -50,6 +44,7 @@ import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TangoL1ControllerTestConexionImpl(
+    private val bleTestSuite: BLETestSuite,
     private val bleUpgradeController: BLEUpgradeController,
     private val cryptographyController: CryptographyController,
     private val tangoSessionController: TangoSessionController,
@@ -76,7 +71,7 @@ class TangoL1ControllerTestConexionImpl(
     private val characteristicSendTelemetry = bleUpgradeController
         .characteristics
         .mapNotNull { characteristics->
-            characteristics.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_TELEMETRY_UUID }
+            characteristics.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_TELEMETRY }
         }
         .distinctUntilChanged { old, new ->
             old === new
@@ -129,7 +124,7 @@ class TangoL1ControllerTestConexionImpl(
                     logger.d(LOG_KEY,"Buscando caracteristica 'ReceivePublicKey'..")
                     val receiveCharacteristic = bleUpgradeController
                         .characteristics
-                        .map { it.firstOrNull {char-> TangoL1Config.CHARACTERISTIC_RECEIVE_KEY_UUID == char.uuid} }
+                        .map { it.firstOrNull {char-> TangoL1Config.CHARACTERISTIC_RECEIVE_KEY == char.uuid} }
                         .filterNotNull()
                         .firstWithTimeout(5000)
                     logger.d(LOG_KEY,"Encontrada, solicitando clave publica..")
@@ -149,7 +144,7 @@ class TangoL1ControllerTestConexionImpl(
                     logger.d(LOG_KEY,"Buscando caracteristica 'SendPublicKey'..")
                     val sendCharacteristic = bleUpgradeController
                         .characteristics
-                        .mapNotNull { it.firstOrNull {char-> TangoL1Config.CHARACTERISTIC_SEND_KEY_UUID == char.uuid} }
+                        .mapNotNull { it.firstOrNull {char-> TangoL1Config.CHARACTERISTIC_SEND_KEY == char.uuid} }
                         .filterNotNull()
                         .firstWithTimeout(5000)
                     logger.d(LOG_KEY,"Encontrada, enviando clave publica [${publicKey.size}]: ${publicKey.toList()}")
@@ -164,6 +159,8 @@ class TangoL1ControllerTestConexionImpl(
                         logger.e(LOG_KEY, "No se pudo calcular la clave compartida")
                         return@run false
                     }
+
+                    bleTestSuite.onSessionCreated()
 
                     delay(1000)
 
@@ -203,7 +200,7 @@ class TangoL1ControllerTestConexionImpl(
             val result = bleUpgradeController.connect(
                 name = name,
                 timeoutMillis = TangoL1Config.CONNECTION_TIMEOUT,
-                servicesUUID = listOf(TangoL1Config.SERVICE_MAIN_UUID),
+                servicesUUID = listOf(TangoL1Config.SERVICE_MAIN),
                 mtu = 516
             )
             if(!result) {
@@ -236,7 +233,7 @@ class TangoL1ControllerTestConexionImpl(
                 return@withContext
             }
 
-            val sendCharacteristic = bleUpgradeController.characteristics.value.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_TELEMETRY_UUID } ?: run {
+            val sendCharacteristic = bleUpgradeController.characteristics.value.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_TELEMETRY } ?: run {
                 logger.e(LOG_KEY, "Error al encontrar la caracteristica")
                 return@withContext
             }
@@ -269,15 +266,14 @@ class TangoL1ControllerTestConexionImpl(
         }
 
         coroutineScope.launch {
-            bleUpgradeController
-                .status
-                .filter { it == BLEUpgradeConnectionStatus.Connected }
+            _status
+                .filter { it == TangoL1Status.Connected }
                 .collectLatest { _->
                     coroutineScope {
                         launch {
                             bleUpgradeController
                                 .characteristics
-                                .messageTest(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY_UUID)
+                                .messageTest(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY)
                                 .collect {incomingMsg->
                                     telemetryRaw.send(incomingMsg)
                                 }

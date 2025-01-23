@@ -1,41 +1,24 @@
 package com.example.apiabstractiontest
 
-import com.example.apiabstractiontest.ble_test.BLEDeviceCharacteristicTestImpl
-import com.example.apiabstractiontest.ble_test.BLEDeviceTestImpl
-import com.example.apiabstractiontest.ble_test.BLETestSuite
-import com.example.apiabstractiontest.ble_test.messageTest
-import com.fulmar.tango.layer1.config.TangoL1Config
-import com.supermegazinc.ble.device.characteristic.BLEDeviceCharacteristic
 import com.supermegazinc.ble.device.model.BLEDeviceStatus
 import com.supermegazinc.ble.gatt.model.BLEDisconnectionReason
 import com.supermegazinc.logger.Logger
-import com.supermegazinc.logger.LoggerCustom
-import com.supermegazinc.logger.LoggerImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlin.coroutines.coroutineContext
-import kotlin.math.log
 
 class BLEDevice() {
 
