@@ -65,6 +65,14 @@ class TangoFirmwareController(
         }.collect()
     }
 
+    private suspend fun observeConnection() {
+        connected.collect {
+            if(!it && updateFirmwareJob?.isActive==true) {
+                clear()
+            }
+        }
+    }
+
     private var updateFirmwareJob: Job? = null
     private fun taskUpdateFirmware(apiVersion: String) {
         updateFirmwareJob?.cancel()
@@ -130,9 +138,15 @@ class TangoFirmwareController(
         coroutineScope.launch {
             observeVersions()
         }
+        coroutineScope.launch {
+            observeConnection()
+        }
     }
 
     fun clear() {
+        if(updateFirmwareJob?.isActive==true) {
+            logger.e(LOG_KEY, "Cancelando actualizacion de firmware")
+        }
         updateFirmwareJob?.cancel()
         _firmwareUpdateStatus.update { TangoFirmwareUpdateStatus.NONE }
     }

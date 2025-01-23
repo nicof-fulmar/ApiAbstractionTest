@@ -123,7 +123,7 @@ class TangoL1ControllerTestFirmwareImpl(
     )
 
     private val firmwareController = TangoFirmwareController(
-        connected = bleUpgradeController.status.map {it == BLEUpgradeConnectionStatus.Connected},
+        connected = _status.map {it == TangoL1Status.Connected},
         onSendFirmwareInit = { message->
             val shared = sharedKeyFlow.value ?: run {
                 logger.e(LOG_KEY, "[onSendFirmwareInit] - Error al obtener la clave compartida")
