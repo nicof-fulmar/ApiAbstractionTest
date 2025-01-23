@@ -138,11 +138,17 @@ fun main() {
             }
             launch {
                 delay(1000)
-                _characteristics.emit(listOf(BLEDeviceCharacteristicTestImpl(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY_UUID)))
-                delay(1000)
-                _characteristics.update { it + BLEDeviceCharacteristicTestImpl(TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE) }
-                delay(5000)
-                _characteristics.emit(emptyList())
+                while(isActive) {
+                    _characteristics.emit(listOf(BLEDeviceCharacteristicTestImpl(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY_UUID)))
+                    delay(1000)
+                    _characteristics.update { it + BLEDeviceCharacteristicTestImpl(TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE) }
+                    delay(5000)
+                    _characteristics.update {
+                        it.forEach {char-> char.close()}
+                        emptyList()
+                    }
+                    delay(5000)
+                }
             }
         }.join()
     }
