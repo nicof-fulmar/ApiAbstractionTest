@@ -1,5 +1,9 @@
 package com.example.apiabstractiontest
 
+import com.example.apiabstractiontest.ble_test.BLEDeviceCharacteristicTestImpl
+import com.example.apiabstractiontest.ble_test.messageTest
+import com.fulmar.tango.layer1.config.TangoL1Config
+import com.supermegazinc.ble.device.characteristic.BLEDeviceCharacteristic
 import com.supermegazinc.ble.device.model.BLEDeviceStatus
 import com.supermegazinc.ble.gatt.model.BLEDisconnectionReason
 import kotlinx.coroutines.CoroutineScope
@@ -9,9 +13,12 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.filter
@@ -113,43 +120,30 @@ suspend fun doSomething2() {
 
 
 fun main() {
-    /*
 
-    val coroutineScope = CoroutineScope(Dispatchers.IO)
-    coroutineScope.coroutineContext[Job]?.invokeOnCompletion {
-        println("Scope " + it)
-    }
-
-    val task1Job = Job()
-    task1Job.invokeOnCompletion {
-        println("Job: " + it)
-    }
-
-    val task1CoroutineScope = CoroutineScope(coroutineScope.coroutineContext + task1Job)
-    task1CoroutineScope.cancel()
-
-    task1CoroutineScope.coroutineContext[Job]?.invokeOnCompletion {
-        println("TaskCoroutine: " + it)
-    }
-
-     */
-
-    val firmware = Channel<ByteArray>(capacity = 100, onBufferOverflow = BufferOverflow.SUSPEND)
+    val _characteristics = MutableStateFlow<List<BLEDeviceCharacteristic>>(emptyList())
+    val characteristics = _characteristics.asStateFlow()
 
     runBlocking {
         launch {
-            firmware.consumeAsFlow().collect { message->
-                delay(1000)
-                println(message.decodeToString())
+            launch {
+                characteristics.messageTest(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY_UUID).collect { message->
+                    println(message)
+                }
             }
-            println("done")
-        }
-        launch {
-            firmware.send("hola".toByteArray())
-            firmware.send("como".toByteArray())
-            firmware.send("estas".toByteArray())
-            delay(1000)
-            firmware.send("aaa".toByteArray())
-        }
+            launch {
+                characteristics.collect {
+                    println("Caracteristica: " + it)
+                }
+            }
+            launch {
+                delay(1000)
+                _characteristics.emit(listOf(BLEDeviceCharacteristicTestImpl(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY_UUID)))
+                delay(1000)
+                _characteristics.update { it + BLEDeviceCharacteristicTestImpl(TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE) }
+                delay(5000)
+                _characteristics.emit(emptyList())
+            }
+        }.join()
     }
 }
