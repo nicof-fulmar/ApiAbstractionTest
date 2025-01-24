@@ -38,8 +38,6 @@ suspend fun tangoFirmwareSender(
             return false
         }
 
-        incomingMsg.toList().map { it.toInt().toChar() }
-
         val requestedFrame = deserializedFirmwareNextFrame.data.nextFrame
         if(requestedFrame != expectedFrame) {
             logger.e(LOG_KEY, "Esperaba frame $expectedFrame pero recibi $requestedFrame")
