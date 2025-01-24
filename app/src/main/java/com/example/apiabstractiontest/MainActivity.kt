@@ -17,10 +17,6 @@ class MainActivity : ComponentActivity() {
             App.tangoL1Controller.connect(
                 BLETestK.TANGO_BLE_NAME
             )
-
-            delay(15000)
-
-            App.tangoL1Controller.disconnect()
         }
     }
 }

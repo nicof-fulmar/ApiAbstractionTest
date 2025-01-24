@@ -122,8 +122,6 @@ class App: Application() {
             coroutineContext = coroutineScope.coroutineContext
         )
 
-
-
         val cryptographyController = CryptographyControllerTestImpl(
             applicationContext,
             logger = logger
