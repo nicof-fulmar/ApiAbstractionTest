@@ -22,10 +22,12 @@ import com.supermegazinc.escentials.firstWithTimeout
 import com.supermegazinc.logger.Logger
 import com.supermegazinc.security.cryptography.CryptographyController
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -42,7 +44,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class TangoL1ControllerTestFirmwareImpl(
+    private val bleTestSuite: BLETestSuite,
     private val bleUpgradeController: BLEUpgradeController,
     private val cryptographyController: CryptographyController,
     private val tangoSessionController: TangoSessionController,
@@ -83,7 +87,7 @@ class TangoL1ControllerTestFirmwareImpl(
     private val characteristicSendFirmware = bleUpgradeController
         .characteristics
         .mapNotNull { characteristics->
-            characteristics.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_TELEMETRY }
+            characteristics.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_FIRMWARE }
         }
         .distinctUntilChanged { old, new ->
             old === new
@@ -94,6 +98,7 @@ class TangoL1ControllerTestFirmwareImpl(
             null
         )
 
+
     private val firmwareRaw = Channel<ByteArray>(capacity = 100, onBufferOverflow = BufferOverflow.SUSPEND)
     private val telemetryRaw = Channel<ByteArray>(Channel.CONFLATED)
 
@@ -102,7 +107,7 @@ class TangoL1ControllerTestFirmwareImpl(
         telemetryRaw = telemetryRaw,
         onSendAck = {ack->
             coroutineScope.launch {
-                characteristicSendTelemetry.value?.send(ack) ?: logger.e(LOG_KEY, "[onSendAck] - No se pudo encontrar la caracteristica")
+                characteristicSendTelemetry.value?.send(ack) ?: logger.e(LOG_KEY, "No se pudo enviar ack: No existe la caracteristica")
             }
         },
         tramaController = TramaControllerImpl(),
@@ -113,33 +118,37 @@ class TangoL1ControllerTestFirmwareImpl(
     )
 
     private val firmwareController = TangoFirmwareController(
-        connected = _status.map {it == TangoL1Status.Connected},
+        connected = _status.map { it == TangoL1Status.Connected },
         onSendFirmwareInit = { message->
-            val shared = sharedKeyFlow.value ?: run {
-                logger.e(LOG_KEY, "[onSendFirmwareInit] - Error al obtener la clave compartida")
+            val characteristic = characteristicSendFirmware.value?: run {
+                logger.e(LOG_KEY, "No se pudo enviar FirmwareInit: No existe la caracteristica")
                 return@TangoFirmwareController false
             }
 
-            val encryptedMsg = cryptographyController.encrypt(message, shared) ?: run {
-                logger.e(LOG_KEY, "[onSendFirmwareInit] - Error al encriptar el ack")
+            val shared = sharedKeyFlow.value ?: run {
+                logger.e(LOG_KEY, "No se pudo enviar FirmwareInit: No existe la clave compartida")
                 return@TangoFirmwareController false
             }
-            characteristicSendFirmware.value?.send(encryptedMsg) ?: run {
-                logger.e(LOG_KEY, "[onSendFirmwareInit] - No se pudo encontrar la caracteristica")
+
+            val encrypted = cryptographyController.encrypt(message, shared) ?: run {
+                logger.e(LOG_KEY, "No se pudo enviar FirmwareInit: No se pudo encriptar el mensaje")
                 return@TangoFirmwareController false
             }
+
+            characteristic.send(encrypted)
             return@TangoFirmwareController true
         },
-        onSendFirmwareFrame = { message->
-            characteristicSendFirmware.value?.send(message) ?: run {
-                logger.e(LOG_KEY, "[onSendFirmwareFrame] - No se pudo encontrar la caracteristica")
+        onSendFirmwareFrame = {message->
+            val characteristic = characteristicSendFirmware.value?: run {
+                logger.e(LOG_KEY, "No se pudo enviar FirmwareFrame: No existe la caracteristica")
                 return@TangoFirmwareController false
             }
+            characteristic.send(message)
             return@TangoFirmwareController true
         },
-        firmwareRx = incomingMessageProcessor.firmware,
+        firmwareRx = firmwareRaw,
         onObtainFirmwareBinary = {
-            delay(1000)
+            delay(2000)
             return@TangoFirmwareController context.resources.openRawResource(R.raw.firmware).readBytes()
         },
         logger = logger,
@@ -206,9 +215,14 @@ class TangoL1ControllerTestFirmwareImpl(
                         return@run false
                     }
 
+                    bleTestSuite.onSessionCreated()
+
                     delay(1000)
 
                     bleUpgradeController.discoverServices()
+
+                    firmwareController.setTangoVersion("1.0.3")
+                    firmwareController.setApiVersion("1.0.5")
 
                     delay(3000)
 
@@ -217,9 +231,6 @@ class TangoL1ControllerTestFirmwareImpl(
                             "PUBLIC[${session.myPublicKey.size}]: ${session.myPublicKey}\n" +
                             "SHARED[${session.sharedKey.size}]: ${session.sharedKey}"
                     )
-
-                    firmwareController.setTangoVersion("1.0.3")
-                    firmwareController.setApiVersion("1.0.5")
 
                     return@run true
 
@@ -312,7 +323,30 @@ class TangoL1ControllerTestFirmwareImpl(
             )
         }
 
-        //MENSAJES
+        coroutineScope.launch {
+            _status
+                .filter { it == TangoL1Status.Connected }
+                .collectLatest { _->
+                    coroutineScope {
+                        launch {
+                            bleUpgradeController
+                                .characteristics
+                                .messageTest(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY)
+                                .collect {incomingMsg->
+                                    telemetryRaw.send(incomingMsg)
+                                }
+                        }
+                        launch {
+                            bleUpgradeController
+                                .characteristics
+                                .messageTest(TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE)
+                                .collect {incomingMsg->
+                                    firmwareRaw.send(incomingMsg)
+                                }
+                        }
+                    }
+                }
+        }
 
         coroutineScope.launch {
             bleUpgradeController
