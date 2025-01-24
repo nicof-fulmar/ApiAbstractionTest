@@ -22,25 +22,12 @@ suspend fun tangoFirmwareSender(
     while(lastFrameSent<binary.size) {
         val expectedFrame = lastFrameSent+1
 
-        val incomingMsg = try {
+        try {
             withTimeout(receiveTimeoutMs) {
                 firmwareRx.receive()
             }
         } catch (_: TimeoutCancellationException) {
             logger.e(LOG_KEY, "Timeout: No recibi nextFrame con frame: $expectedFrame")
-            return false
-        }
-
-        val deserializedFirmwareNextFrame = try {
-            gson.fromJson(incomingMsg.decodeToString(), TangoFirmwareNextFrameJson::class.java)!!
-        } catch (_: Exception) {
-            logger.e(LOG_KEY, "Error al deserializar json:\n[BYT]:${incomingMsg.toList()}\n[STR]:'${incomingMsg.decodeToString()}'")
-            return false
-        }
-
-        val requestedFrame = deserializedFirmwareNextFrame.data.nextFrame
-        if(requestedFrame != expectedFrame) {
-            logger.e(LOG_KEY, "Esperaba frame $expectedFrame pero recibi $requestedFrame")
             return false
         }
 

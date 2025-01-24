@@ -50,21 +50,7 @@ class TangoL1IncomingMessageProcessor(
     init {
         coroutineScope.launch {
             firmwareRaw.consumeAsFlow().collect { message->
-                val shared = sharedKey.value ?: run {
-                    logger.e(LOG_KEY, "Error al obtener la clave compartida")
-                    return@collect
-                }
-
-                val decrypted = cryptographyController.decrypt(
-                    msg = message,
-                    key = shared
-                ) ?: run {
-                    logger.e(LOG_KEY, "Error al desencriptar el mensaje")
-                    return@collect
-                }
-
-                _firmware.send(decrypted)
-
+                _firmware.send(message)
             }
         }
         coroutineScope.launch {
