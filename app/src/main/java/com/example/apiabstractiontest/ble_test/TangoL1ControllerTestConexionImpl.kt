@@ -74,9 +74,6 @@ class TangoL1ControllerTestConexionImpl(
         .map { characteristics ->
             characteristics.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_TELEMETRY }
         }
-        .distinctUntilChanged { old, new ->
-            old === new
-        }
         .stateIn(
             coroutineScope,
             SharingStarted.Eagerly,

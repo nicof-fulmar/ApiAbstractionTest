@@ -72,11 +72,8 @@ class TangoL1ControllerTestFirmwareImpl(
 
     private val characteristicSendTelemetry = bleUpgradeController
         .characteristics
-        .mapNotNull { characteristics->
+        .map { characteristics ->
             characteristics.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_TELEMETRY }
-        }
-        .distinctUntilChanged { old, new ->
-            old === new
         }
         .stateIn(
             coroutineScope,
@@ -86,11 +83,8 @@ class TangoL1ControllerTestFirmwareImpl(
 
     private val characteristicSendFirmware = bleUpgradeController
         .characteristics
-        .mapNotNull { characteristics->
+        .map { characteristics ->
             characteristics.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_FIRMWARE }
-        }
-        .distinctUntilChanged { old, new ->
-            old === new
         }
         .stateIn(
             coroutineScope,
