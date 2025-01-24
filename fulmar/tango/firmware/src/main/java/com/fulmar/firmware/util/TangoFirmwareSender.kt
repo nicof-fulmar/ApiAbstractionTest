@@ -34,7 +34,7 @@ suspend fun tangoFirmwareSender(
         val deserializedFirmwareNextFrame = try {
             gson.fromJson(incomingMsg.decodeToString(), TangoFirmwareNextFrameJson::class.java)!!
         } catch (_: Exception) {
-            logger.e(LOG_KEY, "Error al deserializar json")
+            logger.e(LOG_KEY, "Error al deserializar json:\n[BYT]:[${incomingMsg.toList()}]\n[STR]:'${incomingMsg.decodeToString()}'")
             return false
         }
 
