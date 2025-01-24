@@ -20,6 +20,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -48,7 +49,7 @@ class TangoL1IncomingMessageProcessor(
 
     init {
         coroutineScope.launch {
-            firmwareRaw.receiveAsFlow().collect { message->
+            firmwareRaw.consumeAsFlow().collect { message->
                 val shared = sharedKey.value ?: run {
                     logger.e(LOG_KEY, "Error al obtener la clave compartida")
                     return@collect
@@ -67,7 +68,7 @@ class TangoL1IncomingMessageProcessor(
             }
         }
         coroutineScope.launch {
-            telemetryRaw.receiveAsFlow().collect { message->
+            telemetryRaw.consumeAsFlow().collect { message->
                 logger.d(LOG_KEY, "onReceiveRawTelemetry")
 
                 val shared = sharedKey.value ?: run {
