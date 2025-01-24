@@ -8,6 +8,7 @@ import com.example.apiabstractiontest.ble_test.BLETestK
 import com.example.apiabstractiontest.ble_test.BLETestSuite
 import com.example.apiabstractiontest.ble_test.CryptographyControllerTestImpl
 import com.example.apiabstractiontest.ble_test.TangoL1ControllerTestConexionImpl
+import com.example.apiabstractiontest.ble_test.TangoL1ControllerTestFirmwareImpl
 import com.fulmar.tango.layer1.TangoL1Controller
 import com.fulmar.tango.session.TangoSessionController
 import com.fulmar.tango.session.TangoSessionControllerImpl
@@ -134,7 +135,20 @@ class App: Application() {
             logger
         )
 
+        /*
         tangoL1Controller = TangoL1ControllerTestConexionImpl(
+            bleTestSuite,
+            bleUpgrade,
+            cryptographyController,
+            tangoSession,
+            TramaControllerImpl(),
+            logger,
+            coroutineScope,
+            context = applicationContext
+        )
+         */
+
+        tangoL1Controller = TangoL1ControllerTestFirmwareImpl(
             bleTestSuite,
             bleUpgrade,
             cryptographyController,

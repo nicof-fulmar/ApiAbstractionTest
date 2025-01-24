@@ -325,24 +325,25 @@ class TangoL1ControllerTestFirmwareImpl(
 
         coroutineScope.launch {
             _status
-                .filter { it == TangoL1Status.Connected }
-                .collectLatest { _->
-                    coroutineScope {
-                        launch {
-                            bleUpgradeController
-                                .characteristics
-                                .messageTest(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY)
-                                .collect {incomingMsg->
-                                    telemetryRaw.send(incomingMsg)
-                                }
-                        }
-                        launch {
-                            bleUpgradeController
-                                .characteristics
-                                .messageTest(TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE)
-                                .collect {incomingMsg->
-                                    firmwareRaw.send(incomingMsg)
-                                }
+                .collectLatest { status->
+                    if(status==TangoL1Status.Connected) {
+                        coroutineScope {
+                            launch {
+                                bleUpgradeController
+                                    .characteristics
+                                    .messageTest(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY)
+                                    .collect {incomingMsg->
+                                        telemetryRaw.send(incomingMsg)
+                                    }
+                            }
+                            launch {
+                                bleUpgradeController
+                                    .characteristics
+                                    .messageTest(TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE)
+                                    .collect {incomingMsg->
+                                        firmwareRaw.send(incomingMsg)
+                                    }
+                            }
                         }
                     }
                 }
