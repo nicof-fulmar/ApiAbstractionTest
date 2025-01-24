@@ -33,7 +33,7 @@ class TangoL1IncomingMessageProcessor(
     private val tramaController: TramaController,
     private val cryptographyController: CryptographyController,
     private val logger: Logger,
-    private val coroutineScope: CoroutineScope
+    coroutineScope: CoroutineScope
 ) {
 
     private companion object {

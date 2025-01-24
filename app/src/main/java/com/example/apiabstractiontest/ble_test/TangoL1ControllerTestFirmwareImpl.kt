@@ -140,7 +140,7 @@ class TangoL1ControllerTestFirmwareImpl(
             characteristic.send(message)
             return@TangoFirmwareController true
         },
-        firmwareRx = firmwareRaw,
+        firmwareRx = incomingMessageProcessor.firmware,
         onObtainFirmwareBinary = {
             delay(2000)
             return@TangoFirmwareController context.resources.openRawResource(R.raw.firmware).readBytes()
