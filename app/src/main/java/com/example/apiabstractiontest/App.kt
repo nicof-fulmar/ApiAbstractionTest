@@ -31,6 +31,7 @@ class App: Application() {
         lateinit var bleUpgrade: BLEUpgradeController
         lateinit var tangoSession: TangoSessionController
         lateinit var tangoL1Controller: TangoL1Controller
+        lateinit var bleTestSuite: BLETestSuite
     }
 
     override fun onCreate() {
@@ -40,7 +41,7 @@ class App: Application() {
 
         val coroutineScope = CoroutineScope(Dispatchers.IO)
 
-        val bleTestSuite = BLETestSuite(
+        bleTestSuite = BLETestSuite(
             logger,
             coroutineScope
         )

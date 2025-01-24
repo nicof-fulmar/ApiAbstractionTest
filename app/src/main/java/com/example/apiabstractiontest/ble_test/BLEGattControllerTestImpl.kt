@@ -3,6 +3,8 @@ package com.example.apiabstractiontest.ble_test
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothGatt
 import com.supermegazinc.ble.gatt.BLEGattController
+import com.supermegazinc.ble.gatt.BLEGattControllerImpl
+import com.supermegazinc.ble.gatt.BLEGattControllerImpl.Companion
 import com.supermegazinc.ble.gatt.characteristic.BLEGattCharacteristic
 import com.supermegazinc.ble.gatt.model.BLEMessageEvent
 import com.supermegazinc.ble.gatt.model.BLESessionConnectionEvent
@@ -22,6 +24,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -95,7 +98,6 @@ class BLEGattControllerTestImpl(
             val currentCharacteristicsUUIDs = currentCharacteristics.map { it.uuid }.toSet()
             if(newCharacteristicsUUIDs == currentCharacteristicsUUIDs) return@update currentCharacteristics
 
-            logger.d(LOG_KEY, "Caracteristicas actualizadas: ${newCharacteristicsUUIDs.toList()}")
             val noLongerExist = currentCharacteristics.filter { it.uuid !in newCharacteristicsUUIDs }
             noLongerExist.forEach { it.close() }
             val keepUntouched = currentCharacteristics.filter { it.uuid in newCharacteristicsUUIDs }
@@ -110,7 +112,9 @@ class BLEGattControllerTestImpl(
                         coroutineScope
                     )
                 }
-            return@update keepUntouched + newOnes
+            return@update (keepUntouched + newOnes).also { result->
+                logger.d(LOG_KEY, "Caracteristicas actualizadas: ${result.joinToString { it.uuid.toString() + "[${System.identityHashCode(it)}]" }}")
+            }
         }
     }
 
@@ -152,6 +156,11 @@ class BLEGattControllerTestImpl(
                     updateServices(it)
                 }
             }
+            launch {
+                bleTestSuite.lostConnectionTrigger.collect {
+                    _connectionEvents.emit(BLESessionConnectionEvent.CONNECTION_LOST)
+                }
+            }
         }
     }
 
@@ -187,10 +196,9 @@ class BLEGattControllerTestImpl(
     }
 
     override fun endSession() {
-        logger.d(LOG_KEY, "Terminando sesion")
+        logger.d(BLEGattControllerImpl.LOG_KEY, "Terminando sesion")
         connectJob?.cancel()
-        _characteristics.update { emptyList() }
-        _services.update { emptyList() }
+        clearServicesAndCharacteristics()
         sessionJob?.cancel()
     }
 

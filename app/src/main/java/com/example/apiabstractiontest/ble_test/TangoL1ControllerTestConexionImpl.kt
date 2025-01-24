@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -70,7 +71,7 @@ class TangoL1ControllerTestConexionImpl(
 
     private val characteristicSendTelemetry = bleUpgradeController
         .characteristics
-        .mapNotNull { characteristics->
+        .map { characteristics ->
             characteristics.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_TELEMETRY }
         }
         .distinctUntilChanged { old, new ->
@@ -200,7 +201,7 @@ class TangoL1ControllerTestConexionImpl(
             val result = bleUpgradeController.connect(
                 name = name,
                 timeoutMillis = TangoL1Config.CONNECTION_TIMEOUT,
-                servicesUUID = listOf(TangoL1Config.SERVICE_MAIN),
+                servicesUUID = listOf(TangoL1Config.SERVICE_MAIN_UUID),
                 mtu = 516
             )
             if(!result) {
@@ -267,24 +268,25 @@ class TangoL1ControllerTestConexionImpl(
 
         coroutineScope.launch {
             _status
-                .filter { it == TangoL1Status.Connected }
-                .collectLatest { _->
-                    coroutineScope {
-                        launch {
-                            bleUpgradeController
-                                .characteristics
-                                .messageTest(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY)
-                                .collect {incomingMsg->
-                                    telemetryRaw.send(incomingMsg)
-                                }
-                        }
-                        launch {
-                            bleUpgradeController
-                                .characteristics
-                                .messageTest(TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE)
-                                .collect {incomingMsg->
-                                    firmwareRaw.send(incomingMsg)
-                                }
+                .collectLatest { status->
+                    if(status==TangoL1Status.Connected) {
+                        coroutineScope {
+                            launch {
+                                bleUpgradeController
+                                    .characteristics
+                                    .messageTest(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY)
+                                    .collect {incomingMsg->
+                                        telemetryRaw.send(incomingMsg)
+                                    }
+                            }
+                            launch {
+                                bleUpgradeController
+                                    .characteristics
+                                    .messageTest(TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE)
+                                    .collect {incomingMsg->
+                                        firmwareRaw.send(incomingMsg)
+                                    }
+                            }
                         }
                     }
                 }

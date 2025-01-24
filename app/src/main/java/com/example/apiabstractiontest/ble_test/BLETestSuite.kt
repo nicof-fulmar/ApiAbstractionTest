@@ -26,6 +26,13 @@ class BLETestSuite(
     val characteristics = MutableStateFlow<List<UUID>>(emptyList())
     val services = MutableStateFlow<List<UUID>>(emptyList())
 
+    val lostConnectionTrigger = MutableSharedFlow<Unit>()
+    fun onLostConnection() {
+        coroutineScope.launch {
+            lostConnectionTrigger.emit(Unit)
+        }
+    }
+
     fun onConnectGatt() {
         hiddenCharacteristics.update {
             listOf(
@@ -37,7 +44,7 @@ class BLETestSuite(
         }
         services.update {
             listOf(
-                TangoL1Config.SERVICE_MAIN
+                TangoL1Config.SERVICE_MAIN_UUID
             )
         }
     }

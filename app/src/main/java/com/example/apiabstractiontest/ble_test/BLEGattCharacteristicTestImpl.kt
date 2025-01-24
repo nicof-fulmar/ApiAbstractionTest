@@ -31,12 +31,12 @@ class BLEGattCharacteristicTestImpl(
         get() = _message
 
     override fun setNotification(state: Boolean) {
-        logger.d(LOG_KEY, "$uuid: Setear notification: $state")
+        logger.d(LOG_KEY, "$uuid[${System.identityHashCode(this@BLEGattCharacteristicTestImpl)}] : Setear notification: $state")
         bleTestSuite.setNotification(uuid, state)
     }
 
     override fun forceRead() {
-        logger.d(LOG_KEY, "$uuid: Forzar lectura")
+        logger.d(LOG_KEY, "$uuid[${System.identityHashCode(this@BLEGattCharacteristicTestImpl)}] : Forzar lectura")
         bleGattController.readCharacteristic(this.uuid)
     }
 
@@ -45,7 +45,7 @@ class BLEGattCharacteristicTestImpl(
         val messageList = message.toList()
         logger.d(
             LOG_KEY,
-            "$uuid: Enviando mensaje[BYT]: [${messageList.size}][${messageList.joinToString(",")}]"
+            "$uuid[${System.identityHashCode(this@BLEGattCharacteristicTestImpl)}] : Enviando mensaje[BYT]: [${messageList.size}][${messageList.joinToString(",")}]"
         )
         //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         //    bleGattController.instance.value?.writeCharacteristic(characteristic, message, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT)
@@ -60,13 +60,13 @@ class BLEGattCharacteristicTestImpl(
             .filter { it.characteristicUUID == uuid }
             .collect { tMessage->
                 val messageList = tMessage.message.toList()
-                logger.d(LOG_KEY,"$uuid: Mensaje recibido[BYT]: [${messageList.size}][${messageList.joinToString(",")}]")
+                logger.d(LOG_KEY,"$uuid[${System.identityHashCode(this@BLEGattCharacteristicTestImpl)}] : Mensaje recibido[BYT]: [${messageList.size}][${messageList.joinToString(",")}]")
                 _message.send(tMessage.message)
             }
     }
 
     override fun close() {
-        logger.d(LOG_KEY, "$uuid: Cerrando")
+        logger.d(LOG_KEY, "$uuid[${System.identityHashCode(this@BLEGattCharacteristicTestImpl)}] : Cerrando")
         receiveMessagesJob.cancel()
         _message.close()
         //bleGattController.instance.value?.setCharacteristicNotification(characteristic,false)

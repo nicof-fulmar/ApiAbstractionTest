@@ -258,7 +258,7 @@ class TangoL1ControllerTestFirmwareImpl(
             val result = bleUpgradeController.connect(
                 name = name,
                 timeoutMillis = TangoL1Config.CONNECTION_TIMEOUT,
-                servicesUUID = listOf(TangoL1Config.SERVICE_MAIN),
+                servicesUUID = listOf(TangoL1Config.SERVICE_MAIN_UUID),
                 mtu = 516
             )
             if(!result) {
