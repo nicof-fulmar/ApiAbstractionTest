@@ -40,9 +40,9 @@ suspend fun tangoFirmwareSender(
 
         val requestedFrame = deserializedFirmwareNextFrame.data.nextFrame
 
-        val frameToSend = if(lastFrameSent>0 && requestedFrame == lastFrameSent) {
-            logger.e(LOG_KEY, "El dispositivo volvio a pedir el frame $lastFrameSent, ojo..")
-            lastFrameSent
+        val frameToSend = if(expectedFrame>1 && requestedFrame == expectedFrame-1) {
+            logger.e(LOG_KEY, "El dispositivo volvio a pedir el frame ${expectedFrame-1}, ojo..")
+            expectedFrame-1
         } else if(requestedFrame != expectedFrame) {
             logger.e(LOG_KEY, "Esperaba frame $expectedFrame pero recibi $requestedFrame")
             return false
@@ -50,8 +50,8 @@ suspend fun tangoFirmwareSender(
             expectedFrame
         }
 
-        logger.d(LOG_KEY, "Enviando frame #${frameToSend+1} (${(frameToSend+1)*100/binary.size}%)")
-        if(!onSendFirmwareFrame(binary[frameToSend])) {
+        logger.d(LOG_KEY, "Enviando frame #$frameToSend (${frameToSend*100/binary.size}%)")
+        if(!onSendFirmwareFrame(binary[frameToSend-1])) {
             logger.e(LOG_KEY,"No se pudo enviar el frame")
             return false
         }
