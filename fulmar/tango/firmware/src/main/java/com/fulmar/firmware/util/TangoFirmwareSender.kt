@@ -56,7 +56,7 @@ suspend fun tangoFirmwareSender(
             return false
         }
 
-        lastFrameSent = frameToSend + 1
+        lastFrameSent = frameToSend
     }
 
     return true

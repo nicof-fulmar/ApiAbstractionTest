@@ -18,6 +18,7 @@ supermegazincBle = "3.0.0"
 supermegazincBleUpgrade = "3.0.0-1.0.0"
 supermegazincCrypto = "1.1"
 supermegazincDiffieHellman = "1.0"
+junitJupiter = "5.8.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -38,6 +39,7 @@ supermegazinc-ble = { module = "com.supermegazinc.libraries:ble", version.ref = 
 supermegazinc-bleupgrade = { module = "com.supermegazinc.libraries:ble_upgrade", version.ref = "supermegazincBleUpgrade" }
 supermegazinc-cryptography = { module = "com.supermegazinc.libraries:cryptography", version.ref = "supermegazincCrypto" }
 supermegazinc-diffiehellman = { module = "com.supermegazinc.libraries:diffie_hellman", version.ref = "supermegazincDiffieHellman" }
+junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junitJupiter" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

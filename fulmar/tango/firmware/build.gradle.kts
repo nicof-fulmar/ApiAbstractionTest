@@ -28,4 +28,5 @@ dependencies {
     implementation(libs.supermegazinc.logger)
     implementation(libs.supermegazinc.escentials)
     implementation(libs.converter.gson)
+    testImplementation(libs.junit.jupiter)
 }
