@@ -188,7 +188,8 @@ class TangoL1ControllerTestFirmwareImpl(
                 return@TangoFirmwareController null
             }
 
-            return@TangoFirmwareController deserialized.programacion.versionFw
+            //return@TangoFirmwareController deserialized.programacion.versionFw
+            return@TangoFirmwareController "1.0.1"
 
         },
         tangoFirmwareApi = tangoFirmwareApi
