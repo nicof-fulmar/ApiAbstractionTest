@@ -31,10 +31,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -52,7 +50,6 @@ class TangoL1ControllerTestConexionImpl(
     private val tramaController: TramaController,
     private val logger: Logger,
     private val coroutineScope: CoroutineScope,
-    context: Context
 ): TangoL1Controller {
 
     private companion object {
@@ -271,7 +268,7 @@ class TangoL1ControllerTestConexionImpl(
                             launch {
                                 bleUpgradeController
                                     .characteristics
-                                    .messageTest(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY)
+                                    .messageWithNotify(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY)
                                     .collect {incomingMsg->
                                         telemetryRaw.send(incomingMsg)
                                     }
@@ -279,7 +276,7 @@ class TangoL1ControllerTestConexionImpl(
                             launch {
                                 bleUpgradeController
                                     .characteristics
-                                    .messageTest(TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE)
+                                    .messageWithNotify(TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE)
                                     .collect {incomingMsg->
                                         firmwareRaw.send(incomingMsg)
                                     }

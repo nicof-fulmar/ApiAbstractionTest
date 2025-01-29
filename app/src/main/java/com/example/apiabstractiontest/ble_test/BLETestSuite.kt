@@ -88,6 +88,11 @@ class BLETestSuite(
                     receiveMessages.emit(BLEMessageEvent(TangoL1Config.CHARACTERISTIC_RECEIVE_KEY, BLETestK.TANGO_PUBLIC_KEY))
                 }
             }
+            TangoL1Config.CHARACTERISTIC_RECEIVE_PROGRAMACION -> {
+                coroutineScope.launch {
+                    receiveMessages.emit(BLEMessageEvent(TangoL1Config.CHARACTERISTIC_RECEIVE_PROGRAMACION, BLETestK.TANGO_RECEIVE_PROGRAMACION_PAYLOAD))
+                }
+            }
         }
     }
 

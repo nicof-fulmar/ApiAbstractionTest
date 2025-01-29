@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.map
 import java.util.UUID
 
 @OptIn(ExperimentalCoroutinesApi::class)
-fun Flow<List<BLEGattCharacteristic>>.messageTest(uuid: UUID): Flow<ByteArray> {
+fun Flow<List<BLEGattCharacteristic>>.messageWithNotify(uuid: UUID): Flow<ByteArray> {
     return map { characteristics ->
         characteristics.firstOrNull { it.uuid == uuid }
     }
@@ -27,4 +27,17 @@ fun Flow<List<BLEGattCharacteristic>>.messageTest(uuid: UUID): Flow<ByteArray> {
             emptyFlow()
         }
     }
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
+fun Flow<List<BLEGattCharacteristic>>.message(uuid: UUID): Flow<ByteArray> {
+    return map { characteristics ->
+        characteristics.firstOrNull { it.uuid == uuid }
+    }
+        .distinctUntilChanged { old, new ->
+            old === new
+        }
+        .flatMapLatest { characteristic->
+            characteristic?.message?.consumeAsFlow()?.filterNotNull() ?: emptyFlow()
+        }
 }

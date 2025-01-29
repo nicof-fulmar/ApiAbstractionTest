@@ -13,4 +13,5 @@ object TangoL1Config {
     val CHARACTERISTIC_SEND_FIRMWARE: UUID = UUID.fromString("beb5483e-36e1-4688-b7f5-ea07361b26ae")
 
     const val CONNECTION_TIMEOUT = Long.MAX_VALUE //TODO: Emprolijar
+    const val TANGO_FIRMWARE_VERSION_TIMEOUT = 3000L
 }

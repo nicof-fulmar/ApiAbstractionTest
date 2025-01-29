@@ -1,4 +1,4 @@
-package com.fulmar.firmware.model
+package com.fulmar.firmware.feature_update.model
 
 import com.google.gson.annotations.SerializedName
 

@@ -21,45 +21,18 @@ class CryptographyControllerTestImpl(
     private val logger: Logger,
 ): CryptographyController {
 
-    private companion object {
-        const val LOG_KEY = "CRYPT"
-    }
-
     private val privateKey: PrivateKey
 
     init {
         privateKey = loadPrivateKey()
     }
 
-    override fun encrypt(msg: ByteArray, key: ByteArray): ByteArray? {
-        return try {
-            val iv = ByteArray(16)
-            SecureRandom().nextBytes(iv)
-            val cipher = Cipher.getInstance("AES/CBC/PKCS7Padding")
-            val secretKey = SecretKeySpec(key, "AES")
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey, IvParameterSpec(iv))
-            val encryptedData = cipher.doFinal(msg)
-            iv + encryptedData
-        } catch (e: Exception) {
-            logger.e(LOG_KEY, "Error al encriptar: + ${e.message}")
-            null
-        }
+    override fun encrypt(msg: ByteArray, key: ByteArray): ByteArray {
+        return msg
     }
 
-    override fun decrypt(msg: ByteArray, key: ByteArray): ByteArray? {
-        return try {
-            val ivSize = 16
-            if (msg.size < ivSize) return null
-            val iv = msg.sliceArray(0 until ivSize)
-            val encryptedData = msg.sliceArray(ivSize until msg.size)
-            val cipher = Cipher.getInstance("AES/CBC/PKCS7Padding")
-            val secretKey = SecretKeySpec(BLETestK.TANGO_SHARED_KEY, "AES")
-            cipher.init(Cipher.DECRYPT_MODE, secretKey, IvParameterSpec(iv))
-            cipher.doFinal(encryptedData)
-        } catch (e: Exception) {
-            logger.e(LOG_KEY, "Error al desencriptar: ${e.message}")
-            null
-        }
+    override fun decrypt(msg: ByteArray, key: ByteArray): ByteArray {
+        return msg
     }
 
     override fun sign(msg: ByteArray): ByteArray? {
@@ -74,25 +47,6 @@ class CryptographyControllerTestImpl(
 
     }
 
-    private fun publicKeyToHex(publicKey: PublicKey?): String {
-        val encodedBytes = publicKey?.encoded
-        if (encodedBytes != null) {
-            return encodedBytes.joinToString("") { String.format("%02X", it) }
-        }
-
-        return ""
-    }
-
-    private fun privateKeyToHex(privateKey: PrivateKey): String {
-        val encodedBytes = privateKey.encoded
-        return encodedBytes.joinToString("") { String.format("%02X", it) }
-    }
-
-    /**
-     * Verifica la firma de [publicKeyData] con la clave privada (leída desde raw),
-     * derivando la clave pública y usando RSA + SHA-256 para la verificación.
-     */
-    @OptIn(ExperimentalStdlibApi::class)
     override fun verifyPublicKeySignature(
         publicKeyData: ByteArray,
         signature: ByteArray

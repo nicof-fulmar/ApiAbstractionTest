@@ -9,6 +9,8 @@ import com.example.apiabstractiontest.ble_test.BLETestSuite
 import com.example.apiabstractiontest.ble_test.CryptographyControllerTestImpl
 import com.example.apiabstractiontest.ble_test.TangoL1ControllerTestConexionImpl
 import com.example.apiabstractiontest.ble_test.TangoL1ControllerTestFirmwareImpl
+import com.fulmar.api.model.ApiCertificateInput
+import com.fulmar.firmware.feature_api.TangoFirmwareApiImpl
 import com.fulmar.tango.layer1.TangoL1Controller
 import com.fulmar.tango.session.TangoSessionController
 import com.fulmar.tango.session.TangoSessionControllerImpl
@@ -148,7 +150,16 @@ class App: Application() {
         )
          */
 
+        val tangoFirmwareApi = TangoFirmwareApiImpl(
+            urlBase = "https://api3.ful-mar.net",
+            certificate = ApiCertificateInput(
+                domain = "api3.ful-mar.net",
+                certificatePinSHA256 = "sha256/i8DNKKw/fwh789VUrE4VSWuUQWhxnN0NCuMMyeWtN+g="
+            )
+        )
+
         tangoL1Controller = TangoL1ControllerTestFirmwareImpl(
+            tangoFirmwareApi,
             bleTestSuite,
             bleUpgrade,
             cryptographyController,
@@ -156,7 +167,6 @@ class App: Application() {
             TramaControllerImpl(),
             logger,
             coroutineScope,
-            context = applicationContext
         )
     }
 }

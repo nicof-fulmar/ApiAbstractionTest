@@ -1,11 +1,12 @@
 package com.example.apiabstractiontest.ble_test
 
 import android.content.Context
-import com.example.apiabstractiontest.R
 import com.fulmar.firmware.TangoFirmwareController
+import com.fulmar.firmware.feature_api.TangoFirmwareApi
 import com.fulmar.tango.layer1.TangoL1Controller
 import com.fulmar.tango.layer1.config.TangoL1Config
 import com.fulmar.tango.layer1.feature_incoming_message.TangoL1IncomingMessageProcessor
+import com.fulmar.tango.layer1.models.TangoL1ReceiveFirmwareJSON
 import com.fulmar.tango.layer1.models.TangoL1Status
 import com.fulmar.tango.layer1.service.tangoL1SessionService
 import com.fulmar.tango.session.TangoSessionController
@@ -15,10 +16,12 @@ import com.fulmar.tango.trama.models.Commands
 import com.fulmar.tango.trama.tramas.HeaderUI
 import com.fulmar.tango.trama.tramas.TramaTx
 import com.fulmar.tango.trama.tramas.toTrama
+import com.google.gson.Gson
 import com.supermegazinc.ble_upgrade.BLEUpgradeController
 import com.supermegazinc.ble_upgrade.model.BLEUpgradeConnectionStatus
 import com.supermegazinc.escentials.Status
 import com.supermegazinc.escentials.firstWithTimeout
+import com.supermegazinc.escentials.waitForNextWithTimeout
 import com.supermegazinc.logger.Logger
 import com.supermegazinc.security.cryptography.CryptographyController
 import kotlinx.coroutines.CoroutineScope
@@ -29,11 +32,11 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
@@ -44,8 +47,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class TangoL1ControllerTestFirmwareImpl(
+    tangoFirmwareApi: TangoFirmwareApi,
     private val bleTestSuite: BLETestSuite,
     private val bleUpgradeController: BLEUpgradeController,
     private val cryptographyController: CryptographyController,
@@ -53,7 +56,6 @@ class TangoL1ControllerTestFirmwareImpl(
     private val tramaController: TramaController,
     private val logger: Logger,
     private val coroutineScope: CoroutineScope,
-    context: Context
 ): TangoL1Controller {
 
     private companion object {
@@ -92,9 +94,22 @@ class TangoL1ControllerTestFirmwareImpl(
             null
         )
 
+    private val characteristicReceiveProgramacion = bleUpgradeController
+        .characteristics
+        .map { characteristics ->
+            characteristics.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_RECEIVE_PROGRAMACION }
+        }
+        .stateIn(
+            coroutineScope,
+            SharingStarted.Eagerly,
+            null
+        )
+
 
     private val firmwareRaw = Channel<ByteArray>(capacity = 100, onBufferOverflow = BufferOverflow.SUSPEND)
     private val telemetryRaw = Channel<ByteArray>(Channel.CONFLATED)
+
+    private val installedVersion = MutableSharedFlow<ByteArray>()
 
     private val incomingMessageProcessor = TangoL1IncomingMessageProcessor(
         firmwareRaw = firmwareRaw,
@@ -141,12 +156,42 @@ class TangoL1ControllerTestFirmwareImpl(
             return@TangoFirmwareController true
         },
         firmwareRx = incomingMessageProcessor.firmware,
-        onObtainFirmwareBinary = {
-            delay(2000)
-            return@TangoFirmwareController context.resources.openRawResource(R.raw.firmware).readBytes()
-        },
         logger = logger,
-        coroutineScope = coroutineScope
+        coroutineScope = coroutineScope,
+        onRequestTangoCurrentFirmwareVersion = {
+            val characteristic = characteristicReceiveProgramacion.value ?: run {
+                logger.e(LOG_KEY, "No se pudo solicitar la version instalada: No existe la caracteristica")
+                return@TangoFirmwareController null
+            }
+            characteristic.forceRead()
+            val encrypted = try {
+                installedVersion.waitForNextWithTimeout(TangoL1Config.TANGO_FIRMWARE_VERSION_TIMEOUT)
+            } catch (_: TimeoutCancellationException) {
+                logger.e(LOG_KEY,"No se pudo solicitar la version instalada: Timeout")
+                return@TangoFirmwareController null
+            }
+
+            val shared = sharedKeyFlow.value ?: run {
+                logger.e(LOG_KEY, "No se pudo solicitar la version instalada: No existe la clave compartida")
+                return@TangoFirmwareController null
+            }
+
+            val decrypted = cryptographyController.decrypt(encrypted, shared) ?: run {
+                logger.e(LOG_KEY, "No se pudo solicitar la version instalada: No se pudo desencriptar")
+                return@TangoFirmwareController null
+            }
+
+            val deserialized = try {
+                Gson().fromJson(decrypted.decodeToString(), TangoL1ReceiveFirmwareJSON::class.java)!!
+            } catch (_: Exception) {
+                logger.e(LOG_KEY, "No se pudo solicitar la version instalada: No se pudo deserializar el JSON")
+                return@TangoFirmwareController null
+            }
+
+            return@TangoFirmwareController deserialized.programacion.versionFw
+
+        },
+        tangoFirmwareApi = tangoFirmwareApi
     )
 
     override val telemetry = incomingMessageProcessor.currentTelemetry
@@ -214,9 +259,6 @@ class TangoL1ControllerTestFirmwareImpl(
                     delay(1000)
 
                     bleUpgradeController.discoverServices()
-
-                    firmwareController.setTangoVersion("1.0.3")
-                    firmwareController.setApiVersion("1.0.5")
 
                     delay(3000)
 
@@ -325,7 +367,7 @@ class TangoL1ControllerTestFirmwareImpl(
                             launch {
                                 bleUpgradeController
                                     .characteristics
-                                    .messageTest(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY)
+                                    .messageWithNotify(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY)
                                     .collect {incomingMsg->
                                         telemetryRaw.send(incomingMsg)
                                     }
@@ -333,9 +375,17 @@ class TangoL1ControllerTestFirmwareImpl(
                             launch {
                                 bleUpgradeController
                                     .characteristics
-                                    .messageTest(TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE)
+                                    .messageWithNotify(TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE)
                                     .collect {incomingMsg->
                                         firmwareRaw.send(incomingMsg)
+                                    }
+                            }
+                            launch {
+                                bleUpgradeController
+                                    .characteristics
+                                    .message(TangoL1Config.CHARACTERISTIC_RECEIVE_PROGRAMACION)
+                                    .collect {incomingMsg->
+                                        installedVersion.emit(incomingMsg)
                                     }
                             }
                         }

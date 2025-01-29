@@ -10,6 +10,7 @@ android {
 
     defaultConfig {
         minSdk = 21
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
@@ -23,10 +24,19 @@ android {
 
 }
 
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.supermegazinc.logger)
     implementation(libs.supermegazinc.escentials)
     implementation(libs.converter.gson)
+    implementation(libs.core.ktx)
+    implementation(project(":fulmar:system:api"))
+    implementation(libs.androidx.junit.ktx)
     testImplementation(libs.junit.jupiter)
+    androidTestImplementation(libs.junit.junit)
+    androidTestImplementation(libs.androidx.runner)
 }

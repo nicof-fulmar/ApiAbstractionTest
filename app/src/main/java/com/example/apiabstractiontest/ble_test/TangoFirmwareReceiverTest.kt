@@ -1,7 +1,7 @@
 package com.example.apiabstractiontest.ble_test
 
-import com.fulmar.firmware.model.TangoFirmwareInitJson
-import com.fulmar.firmware.model.TangoFirmwareNextFrameJson
+import com.fulmar.firmware.feature_update.model.TangoFirmwareInitJson
+import com.fulmar.firmware.feature_update.model.TangoFirmwareNextFrameJson
 import com.google.gson.Gson
 import com.supermegazinc.escentials.waitForNextWithTimeout
 import com.supermegazinc.logger.Logger

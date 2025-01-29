@@ -31,6 +31,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
 
     implementation(libs.kotlin.reflect)
+    implementation(libs.converter.gson)
 
     implementation(libs.supermegazinc.bleupgrade)
     implementation(libs.supermegazinc.cryptography)

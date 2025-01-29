@@ -1,6 +1,6 @@
-package com.fulmar.firmware.util
+package com.fulmar.firmware.feature_update.util
 
-import com.fulmar.firmware.model.TangoFirmwareNextFrameJson
+import com.fulmar.firmware.feature_update.model.TangoFirmwareNextFrameJson
 import com.google.gson.Gson
 import com.supermegazinc.logger.Logger
 import kotlinx.coroutines.TimeoutCancellationException

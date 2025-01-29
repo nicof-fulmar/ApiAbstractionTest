@@ -1,4 +1,4 @@
-package com.fulmar.firmware.config
+package com.fulmar.firmware.feature_update.config
 
 object TangoFirmwareConfig {
     const val PACKET_SIZE_BYTES = 500
