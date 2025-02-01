@@ -1,6 +1,8 @@
 package com.fulmar.api
 
+import com.fulmar.api.di.ApiModuleInitializer
 import com.fulmar.api.model.ApiCertificateInput
+import com.supermegazinc.logger.Logger
 import okhttp3.CertificatePinner
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -10,8 +12,11 @@ import java.util.concurrent.TimeUnit
 fun <T: Any>createApiService(
     serviceClass: Class<T>,
     urlBase: String,
-    certificate: ApiCertificateInput?
+    certificate: ApiCertificateInput?,
+    logger: Logger = ApiModuleInitializer._logger
 ): T {
+
+    logger.d("API-SERV", "Creando servicio: ${serviceClass::class.simpleName}")
 
     val okHttpClientBuilder = OkHttpClient.Builder()
 

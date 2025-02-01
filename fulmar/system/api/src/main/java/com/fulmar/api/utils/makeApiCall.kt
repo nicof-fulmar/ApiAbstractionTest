@@ -1,5 +1,6 @@
 package com.fulmar.api.utils
 
+import com.fulmar.api.di.ApiModuleInitializer
 import com.fulmar.api.model.ApiGenericResponse
 import com.fulmar.api.model.ApiResponseError
 import com.google.gson.Gson
@@ -10,8 +11,18 @@ import java.net.SocketTimeoutException
 import com.supermegazinc.escentials.Result
 
 suspend fun <T>makeApiCall(call: suspend () -> Response<T>): Result<T, ApiResponseError> {
-    return try {
-        call.invoke().let {result->
+    val logger = ApiModuleInitializer._logger
+    val LOG_KEY = "API-CALL"
+
+    var method = "NULL"
+    var url = "NULL"
+    return run<Result<T, ApiResponseError>> {
+        try {
+            val result = call.invoke()
+            method = result.raw().request().method()
+            url = result.raw().request().url().toString()
+            logger.d(LOG_KEY, "[$method] - '$url'")
+
             if(result.isSuccessful) Result.Success(result.body()!!)
             else {
                 result.errorBody()?.string()?.let {
@@ -31,16 +42,20 @@ suspend fun <T>makeApiCall(call: suspend () -> Response<T>): Result<T, ApiRespon
                     }
                 )
             }
+        } catch (e: Exception) {
+            Result.Fail(
+                when(e) {
+                    is NullPointerException -> ApiResponseError.BadResponse
+                    is JsonSyntaxException -> ApiResponseError.BadResponse
+                    is SocketTimeoutException -> ApiResponseError.Timeout
+                    is IOException -> ApiResponseError.CantReach
+                    else -> throw e
+                }
+            )
         }
-    } catch (e: Exception) {
-        Result.Fail(
-            when(e) {
-                is NullPointerException -> ApiResponseError.BadResponse
-                is JsonSyntaxException -> ApiResponseError.BadResponse
-                is SocketTimeoutException -> ApiResponseError.Timeout
-                is IOException -> ApiResponseError.CantReach
-                else -> throw e
-            }
-        )
+    }.also { tResult->
+        if(tResult is Result.Fail) {
+            logger.e(LOG_KEY, "[$method] - '$url': ${tResult.error}")
+        }
     }
 }

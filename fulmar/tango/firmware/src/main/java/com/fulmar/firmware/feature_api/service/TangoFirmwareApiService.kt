@@ -12,7 +12,7 @@ import retrofit2.http.Headers
 interface TangoFirmwareApiService {
     @GET(TangoFirmwareApiConfig.URL_GET_LATEST_FIRMWARE_VERSION)
     @Headers("Content-Type: application/json")
-    suspend fun getLatestFirmwareVersion(): Response<GetLatestFirmwareVersionOutput>
+    suspend fun getLatestFirmwareVersion(): Response<ApiGenericResponse<GetLatestFirmwareVersionOutput>>
 
     @GET(TangoFirmwareApiConfig.URL_FETCH_FILE)
     suspend fun fetchFile(): Response<ResponseBody>

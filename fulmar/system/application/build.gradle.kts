@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.fulmar.api"
+    namespace = "com.fulmar.application"
     compileSdk = 34
 
     defaultConfig {
@@ -35,9 +35,9 @@ android {
 dependencies {
 
     implementation(libs.androidx.core.ktx)
-    //API - Retrofit
-    implementation(libs.retrofit)
-    implementation(libs.converter.gson)
-    implementation(libs.supermegazinc.escentials)
-    implementation(libs.supermegazinc.logger)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
 }

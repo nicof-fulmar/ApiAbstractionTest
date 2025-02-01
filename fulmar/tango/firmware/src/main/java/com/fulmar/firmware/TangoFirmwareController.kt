@@ -1,25 +1,18 @@
 package com.fulmar.firmware
 
 import com.fulmar.firmware.feature_api.TangoFirmwareApi
-import com.fulmar.firmware.feature_update.config.TangoFirmwareConfig
-import com.fulmar.firmware.feature_update.model.TangoFirmwareInitJson
 import com.fulmar.firmware.feature_update.model.TangoFirmwareUpdateStatus
-import com.fulmar.firmware.feature_update.util.dividePacket
-import com.fulmar.firmware.feature_update.util.tangoFirmwareSender
+import com.fulmar.firmware.feature_update.util.tangoFirmwareUpdater
 import com.fulmar.firmware.service.tangoFirmwareVersionService
-import com.google.gson.Gson
 import com.supermegazinc.escentials.Result
 import com.supermegazinc.logger.Logger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -29,7 +22,7 @@ class TangoFirmwareController(
     private val onSendFirmwareInit: suspend (ByteArray) -> Boolean,
     private val onSendFirmwareFrame: suspend (ByteArray) -> Boolean,
     private val firmwareRx: ReceiveChannel<ByteArray>,
-    private val tangoFirmwareApi: TangoFirmwareApi,
+    tangoFirmwareApiFactory: () -> TangoFirmwareApi,
     private val logger: Logger,
     private val coroutineScope: CoroutineScope
 ) {
@@ -37,6 +30,8 @@ class TangoFirmwareController(
     private companion object {
         const val LOG_KEY = "TANGO-FMW"
     }
+
+    private val tangoFirmwareApi = tangoFirmwareApiFactory()
 
     private val _firmwareUpdateStatus = MutableStateFlow(TangoFirmwareUpdateStatus.NONE)
     val firmwareUpdateStatus = _firmwareUpdateStatus.asStateFlow()
@@ -55,58 +50,35 @@ class TangoFirmwareController(
         updateFirmwareJob?.cancel()
         updateFirmwareJob = coroutineScope.launch {
             try {
-                run {
-                    _firmwareUpdateStatus.update { TangoFirmwareUpdateStatus.UPDATING }
-                    logger.i(LOG_KEY, "Inicio actualizacion de firmware")
-                    logger.d(LOG_KEY, "1. Obtener el binario del firmware")
-                    val binary = (tangoFirmwareApi.fetchFile() as? Result.Success)?.data
-                    if(binary==null || binary.isEmpty()) {
-                        logger.e(LOG_KEY, "Error al obtener el binario")
-                        return@run
-                    }
-                    val binarySize = binary.size
-                    logger.d(LOG_KEY, "Binario obtenido con exito. Tamaño: $binarySize bytes")
-                    logger.d(LOG_KEY, "2. Dividir el binario en paquetes de ${TangoFirmwareConfig.PACKET_SIZE_BYTES} bytes")
-                    val dividedFirmware = binary.dividePacket(TangoFirmwareConfig.PACKET_SIZE_BYTES)
-                    val packetQty =  dividedFirmware.size
-                    logger.d(LOG_KEY, "Binario dividido en $packetQty partes")
-
-                    logger.d(LOG_KEY, "3. Enviar solicitud de actualizacion de firmware")
-                    val firmwareInit = TangoFirmwareInitJson.TangoFirmwareInitData(
-                        version = apiVersion,
-                        size = binarySize,
-                        packetQty = packetQty
-                    )
-                    val gson = Gson()
-                    val serializedFirmwareInit = gson.toJson(TangoFirmwareInitJson(firmwareInit)).toByteArray()
-                    if(!onSendFirmwareInit(serializedFirmwareInit)) {
-                        logger.e(LOG_KEY, "Error al enviar la solicitud de actualizacion de firmware")
-                        return@run
-                    }
-                    logger.d(LOG_KEY, "Solicitud de actualizacion de firmware enviada")
-
-                    logger.d(LOG_KEY, "4. Espero peticion de NextFrame y comienzo el envio del firmware")
-
-                    if(!tangoFirmwareSender(
-                            onSendFirmwareFrame = { onSendFirmwareFrame(it) },
-                            firmwareRx = firmwareRx,
-                            binary = dividedFirmware,
-                            receiveTimeoutMs = TangoFirmwareConfig.RECEIVE_TIMEOUT_MS,
-                            gson = gson,
-                            logger = logger,
-                            LOG_KEY = LOG_KEY
-                        )
-                    ) {
-                        logger.e(LOG_KEY, "No se pudo enviar el firmware")
-                        return@run
-                    }
-                    logger.i(LOG_KEY, "Firmware enviado con exito")
-                    return@run
+                logger.i(LOG_KEY, "Inicio actualizacion de firmware")
+                _firmwareUpdateStatus.update { TangoFirmwareUpdateStatus.UPDATING }
+                val updateResult = tangoFirmwareUpdater(
+                    version = apiVersion,
+                    onRequestFirmwareBinary = {
+                        (tangoFirmwareApi.fetchFile() as? Result.Success)?.data
+                    },
+                    onSendFirmwareInit = {
+                        onSendFirmwareInit(it)
+                    },
+                    firmwareRx = firmwareRx,
+                    onSendFirmwareFrame = {
+                        onSendFirmwareFrame(it)
+                    },
+                    logger = logger,
+                    logKey = LOG_KEY
+                )
+                if(!updateResult) {
+                    logger.e(LOG_KEY, "No se pudo actualizar el firmware")
+                    return@launch
+                } else {
+                    logger.i(LOG_KEY, "Firmware actualizado con exito")
+                    return@launch
                 }
-                delay(2000)
-                _firmwareUpdateStatus.update { TangoFirmwareUpdateStatus.NONE }
             } catch (e: CancellationException) {
                 logger.e(LOG_KEY, "Actualizacion de firmware cancelada")
+                return@launch
+            } finally {
+                _firmwareUpdateStatus.update { TangoFirmwareUpdateStatus.NONE }
             }
         }
     }
@@ -116,7 +88,15 @@ class TangoFirmwareController(
             tangoFirmwareVersionService(
                 connected = connected,
                 onRequestApiLatestFirmwareVersion = {
-                    (tangoFirmwareApi.getLatestFirmwareVersion() as? Result.Success)?.data?.actualFirmware
+                    when(val result = tangoFirmwareApi.getLatestFirmwareVersion()) {
+                        is Result.Fail -> {
+                            logger.e(LOG_KEY, "No se pudo solicitar la ultima version disponible: ${result.error}")
+                            null
+                        }
+                        is Result.Success -> {
+                            result.data.data.actualFirmware
+                        }
+                    }
                 },
                 onRequestTangoCurrentFirmwareVersion = {
                     onRequestTangoCurrentFirmwareVersion()
@@ -124,7 +104,7 @@ class TangoFirmwareController(
                 onFirmwareUpdate = { version->
                     taskUpdateFirmware(version)
                 },
-                LOG_KEY = LOG_KEY,
+                logKey = LOG_KEY,
                 logger = logger
             )
         }

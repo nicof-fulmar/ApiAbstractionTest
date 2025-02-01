@@ -21,7 +21,7 @@ class TangoFirmwareApiImplTest {
             urlBase = "https://api3.ful-mar.net",
             certificate = ApiCertificateInput(
                 domain = "api3.ful-mar.net",
-                certificatePinSHA256 = "sha256/i8DNKKw/fwh789VUrE4VSWuUQWhxnN0NCuMMyeWtN+g="
+                certificatePinSHA256 = "sha256/jU8P1uAp6g/xcQg/DeGxsi33poQjhMT9wmRFzR/AKsI="
             )
         )
     }
@@ -29,7 +29,7 @@ class TangoFirmwareApiImplTest {
     @Test
     fun getLatestFirmwareVersion() = runBlocking {
         val result = tangoFirmwareApi.getLatestFirmwareVersion()
-        (result as? Result.Success)?.data?.actualFirmware?.let {
+        (result as? Result.Success)?.data?.data?.actualFirmware?.let {
             println("Ultima version de firmware: $it")
         }
         assert(result is Result.Success)

@@ -19,6 +19,9 @@ import com.fulmar.tango.trama.tramas.toTrama
 import com.google.gson.Gson
 import com.supermegazinc.ble_upgrade.BLEUpgradeController
 import com.supermegazinc.ble_upgrade.model.BLEUpgradeConnectionStatus
+import com.supermegazinc.ble_upgrade.utils.characteristic
+import com.supermegazinc.ble_upgrade.utils.message
+import com.supermegazinc.ble_upgrade.utils.messageWithNotify
 import com.supermegazinc.escentials.Status
 import com.supermegazinc.escentials.firstWithTimeout
 import com.supermegazinc.escentials.waitForNextWithTimeout
@@ -39,6 +42,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -48,7 +52,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class TangoL1ControllerTestFirmwareImpl(
-    tangoFirmwareApi: TangoFirmwareApi,
+    tangoFirmwareApiFactory: () -> TangoFirmwareApi,
     private val bleTestSuite: BLETestSuite,
     private val bleUpgradeController: BLEUpgradeController,
     private val cryptographyController: CryptographyController,
@@ -74,37 +78,23 @@ class TangoL1ControllerTestFirmwareImpl(
 
     private val characteristicSendTelemetry = bleUpgradeController
         .characteristics
-        .map { characteristics ->
-            characteristics.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_TELEMETRY }
-        }
-        .stateIn(
-            coroutineScope,
-            SharingStarted.Eagerly,
-            null
-        )
+        .characteristic(TangoL1Config.CHARACTERISTIC_SEND_TELEMETRY)
+
+    private val characteristicReceiveTelemetry = bleUpgradeController
+        .characteristics
+        .characteristic(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY)
 
     private val characteristicSendFirmware = bleUpgradeController
         .characteristics
-        .map { characteristics ->
-            characteristics.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_FIRMWARE }
-        }
-        .stateIn(
-            coroutineScope,
-            SharingStarted.Eagerly,
-            null
-        )
+        .characteristic(TangoL1Config.CHARACTERISTIC_SEND_FIRMWARE)
+
+    private val characteristicReceiveFirmware = bleUpgradeController
+        .characteristics
+        .characteristic(TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE)
 
     private val characteristicReceiveProgramacion = bleUpgradeController
         .characteristics
-        .map { characteristics ->
-            characteristics.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_RECEIVE_PROGRAMACION }
-        }
-        .stateIn(
-            coroutineScope,
-            SharingStarted.Eagerly,
-            null
-        )
-
+        .characteristic(TangoL1Config.CHARACTERISTIC_RECEIVE_PROGRAMACION)
 
     private val firmwareRaw = Channel<ByteArray>(capacity = 100, onBufferOverflow = BufferOverflow.SUSPEND)
     private val telemetryRaw = Channel<ByteArray>(Channel.CONFLATED)
@@ -116,7 +106,7 @@ class TangoL1ControllerTestFirmwareImpl(
         telemetryRaw = telemetryRaw,
         onSendAck = {ack->
             coroutineScope.launch {
-                characteristicSendTelemetry.value?.send(ack) ?: logger.e(LOG_KEY, "No se pudo enviar ack: No existe la caracteristica")
+                characteristicSendTelemetry.firstOrNull()?.send(ack) ?: logger.e(LOG_KEY, "No se pudo enviar ack: No existe la caracteristica")
             }
         },
         tramaController = TramaControllerImpl(),
@@ -129,7 +119,7 @@ class TangoL1ControllerTestFirmwareImpl(
     private val firmwareController = TangoFirmwareController(
         connected = _status.map { it == TangoL1Status.Connected },
         onSendFirmwareInit = { message->
-            val characteristic = characteristicSendFirmware.value?: run {
+            val characteristic = characteristicSendFirmware.firstOrNull()?: run {
                 logger.e(LOG_KEY, "No se pudo enviar FirmwareInit: No existe la caracteristica")
                 return@TangoFirmwareController false
             }
@@ -148,7 +138,7 @@ class TangoL1ControllerTestFirmwareImpl(
             return@TangoFirmwareController true
         },
         onSendFirmwareFrame = {message->
-            val characteristic = characteristicSendFirmware.value?: run {
+            val characteristic = characteristicSendFirmware.firstOrNull()?: run {
                 logger.e(LOG_KEY, "No se pudo enviar FirmwareFrame: No existe la caracteristica")
                 return@TangoFirmwareController false
             }
@@ -159,7 +149,7 @@ class TangoL1ControllerTestFirmwareImpl(
         logger = logger,
         coroutineScope = coroutineScope,
         onRequestTangoCurrentFirmwareVersion = {
-            val characteristic = characteristicReceiveProgramacion.value ?: run {
+            val characteristic = characteristicReceiveProgramacion.firstOrNull() ?: run {
                 logger.e(LOG_KEY, "No se pudo solicitar la version instalada: No existe la caracteristica")
                 return@TangoFirmwareController null
             }
@@ -188,11 +178,11 @@ class TangoL1ControllerTestFirmwareImpl(
                 return@TangoFirmwareController null
             }
 
-            //return@TangoFirmwareController deserialized.programacion.versionFw
-            return@TangoFirmwareController "1.0.1"
+            return@TangoFirmwareController deserialized.programacion.versionFw
+            //return@TangoFirmwareController "1.0.1"
 
         },
-        tangoFirmwareApi = tangoFirmwareApi
+        tangoFirmwareApiFactory = tangoFirmwareApiFactory
     )
 
     override val telemetry = incomingMessageProcessor.currentTelemetry
@@ -294,7 +284,6 @@ class TangoL1ControllerTestFirmwareImpl(
             _status.update { TangoL1Status.Connecting }
             val result = bleUpgradeController.connect(
                 name = name,
-                timeoutMillis = TangoL1Config.CONNECTION_TIMEOUT,
                 servicesUUID = listOf(TangoL1Config.SERVICE_MAIN_UUID),
                 mtu = 516
             )
@@ -328,7 +317,7 @@ class TangoL1ControllerTestFirmwareImpl(
                 return@withContext
             }
 
-            val sendCharacteristic = bleUpgradeController.characteristics.value.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_TELEMETRY } ?: run {
+            val sendCharacteristic = bleUpgradeController.characteristics.firstOrNull()?.firstOrNull { it.uuid == TangoL1Config.CHARACTERISTIC_SEND_TELEMETRY } ?: run {
                 logger.e(LOG_KEY, "Error al encontrar la caracteristica")
                 return@withContext
             }
@@ -366,25 +355,22 @@ class TangoL1ControllerTestFirmwareImpl(
                     if(status==TangoL1Status.Connected) {
                         coroutineScope {
                             launch {
-                                bleUpgradeController
-                                    .characteristics
-                                    .messageWithNotify(TangoL1Config.CHARACTERISTIC_RECEIVE_TELEMETRY)
+                                characteristicReceiveTelemetry
+                                    .messageWithNotify()
                                     .collect {incomingMsg->
                                         telemetryRaw.send(incomingMsg)
                                     }
                             }
                             launch {
-                                bleUpgradeController
-                                    .characteristics
-                                    .messageWithNotify(TangoL1Config.CHARACTERISTIC_RECEIVE_FIRMWARE)
+                                characteristicReceiveFirmware
+                                    .messageWithNotify()
                                     .collect {incomingMsg->
                                         firmwareRaw.send(incomingMsg)
                                     }
                             }
                             launch {
-                                bleUpgradeController
-                                    .characteristics
-                                    .message(TangoL1Config.CHARACTERISTIC_RECEIVE_PROGRAMACION)
+                                characteristicReceiveProgramacion
+                                    .message()
                                     .collect {incomingMsg->
                                         installedVersion.emit(incomingMsg)
                                     }

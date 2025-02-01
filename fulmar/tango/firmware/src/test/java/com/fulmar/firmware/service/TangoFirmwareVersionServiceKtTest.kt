@@ -29,7 +29,7 @@ class TangoFirmwareVersionServiceKtTest {
                 onRequestTangoCurrentFirmwareVersion = { installedVersion },
                 onRequestApiLatestFirmwareVersion = { apiVersion },
                 onFirmwareUpdate = { launch { resultFlow.emit(true) } },
-                LOG_KEY = "TANGO-FMW",
+                logKey = "TANGO-FMW",
                 logger = TestLogger()
             )
         }
@@ -86,7 +86,7 @@ class TangoFirmwareVersionServiceKtTest {
                 onRequestTangoCurrentFirmwareVersion = { delay(1000); "1.0.0" },
                 onRequestApiLatestFirmwareVersion = { delay(1000); "1.0.1" },
                 onFirmwareUpdate = { launch { resultFlow.emit(true) } },
-                LOG_KEY = "TANGO-FMW",
+                logKey = "TANGO-FMW",
                 logger = TestLogger()
             )
         }

@@ -7,8 +7,8 @@ import com.example.apiabstractiontest.ble_test.BLEScannerTestImpl
 import com.example.apiabstractiontest.ble_test.BLETestK
 import com.example.apiabstractiontest.ble_test.BLETestSuite
 import com.example.apiabstractiontest.ble_test.CryptographyControllerTestImpl
-import com.example.apiabstractiontest.ble_test.TangoL1ControllerTestConexionImpl
 import com.example.apiabstractiontest.ble_test.TangoL1ControllerTestFirmwareImpl
+import com.fulmar.api.di.ApiModuleInitializer
 import com.fulmar.api.model.ApiCertificateInput
 import com.fulmar.firmware.feature_api.TangoFirmwareApiImpl
 import com.fulmar.tango.layer1.TangoL1Controller
@@ -41,6 +41,8 @@ class App: Application() {
         super.onCreate()
 
         logger = LoggerImpl()
+
+        ApiModuleInitializer(logger)
 
         val coroutineScope = CoroutineScope(Dispatchers.IO)
 
@@ -150,16 +152,16 @@ class App: Application() {
         )
          */
 
-        val tangoFirmwareApi = TangoFirmwareApiImpl(
-            urlBase = "https://api3.ful-mar.net",
-            certificate = ApiCertificateInput(
-                domain = "api3.ful-mar.net",
-                certificatePinSHA256 = "sha256/i8DNKKw/fwh789VUrE4VSWuUQWhxnN0NCuMMyeWtN+g="
-            )
-        )
-
         tangoL1Controller = TangoL1ControllerTestFirmwareImpl(
-            tangoFirmwareApi,
+            tangoFirmwareApiFactory = {
+                TangoFirmwareApiImpl(
+                    urlBase = "https://api3.ful-mar.net",
+                    certificate = ApiCertificateInput(
+                        domain = "api3.ful-mar.net",
+                        certificatePinSHA256 = "sha256/i8DNKKw/fwh789VUrE4VSWuUQWhxnN0NCuMMyeWtN+g="
+                    )
+                )
+            },
             bleTestSuite,
             bleUpgrade,
             cryptographyController,

@@ -1,6 +1,9 @@
 import java.io.FileInputStream
 import java.util.Properties
 
+include(":fulmar:system:application")
+
+
 include(":fulmar:system:api")
 
 

@@ -13,7 +13,7 @@ suspend fun tangoFirmwareVersionService(
     onRequestApiLatestFirmwareVersion: suspend () -> String?,
     onRequestTangoCurrentFirmwareVersion: suspend () -> String?,
     onFirmwareUpdate: (version: String) -> Unit,
-    LOG_KEY: String,
+    logKey: String,
     logger: Logger,
 ) {
     connected.collectLatest { tConnected->
@@ -21,45 +21,45 @@ suspend fun tangoFirmwareVersionService(
 
         coroutineScope {
             try {
-                logger.i(LOG_KEY, "Conexion detectada, chequeando versiones de firmware")
+                logger.i(logKey, "Conexion detectada, chequeando versiones de firmware")
                 val apiVersionAsync = async {
-                    logger.d(LOG_KEY, "Solicitando ultima version..")
+                    logger.d(logKey, "Solicitando ultima version..")
                     onRequestApiLatestFirmwareVersion()
                 }
                 val tangoVersionAsync = async {
-                    logger.d(LOG_KEY, "Solicitando version instalada..")
+                    logger.d(logKey, "Solicitando version instalada..")
                     onRequestTangoCurrentFirmwareVersion()
                 }
 
                 val apiVersion = apiVersionAsync.await()
                 if(apiVersion==null) {
-                    logger.e(LOG_KEY, "No se pudo obtener la ultima version")
+                    logger.e(logKey, "No se pudo obtener la ultima version")
                     return@coroutineScope
                 }
-                logger.d(LOG_KEY, "Ultima version: $apiVersion")
+                logger.d(logKey, "Ultima version: $apiVersion")
 
                 val tangoVersion = tangoVersionAsync.await()
                 if(tangoVersion==null) {
-                    logger.e(LOG_KEY, "No se pudo obtener la version instalada")
+                    logger.e(logKey, "No se pudo obtener la version instalada")
                     return@coroutineScope
                 }
-                logger.d(LOG_KEY, "Version instalada: $tangoVersion")
+                logger.d(logKey, "Version instalada: $tangoVersion")
 
                 val compare = compareVersions(apiVersion, tangoVersion)
 
                 if(compare < 0) {
-                    logger.e(LOG_KEY, "[CRITIC] - La ultima version disponible es menor a la instalada")
+                    logger.e(logKey, "[CRITIC] - La ultima version disponible es menor a la instalada")
                     return@coroutineScope
                 } else if(compare==0) {
-                    logger.d(LOG_KEY, "Ya esta instalada la ultima version")
+                    logger.d(logKey, "Ya esta instalada la ultima version")
                     return@coroutineScope
                 } else {
-                    logger.d(LOG_KEY, "Nueva version disponible, solicitando actualizacion de firmware")
+                    logger.d(logKey, "Nueva version disponible, solicitando actualizacion de firmware")
                     onFirmwareUpdate(apiVersion)
                     return@coroutineScope
                 }
             } catch (_: CancellationException) {
-                logger.e(LOG_KEY, "Chequeo cancelado")
+                logger.e(logKey, "Chequeo cancelado")
             }
         }
     }

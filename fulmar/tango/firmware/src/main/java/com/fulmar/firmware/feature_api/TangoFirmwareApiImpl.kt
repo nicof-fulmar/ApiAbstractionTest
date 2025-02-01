@@ -16,7 +16,7 @@ class TangoFirmwareApiImpl(
 
     private val service = createApiService(TangoFirmwareApiService::class.java, urlBase, certificate)
     
-    override suspend fun getLatestFirmwareVersion(): Result<GetLatestFirmwareVersionOutput, ApiResponseError> {
+    override suspend fun getLatestFirmwareVersion(): Result<ApiGenericResponse<GetLatestFirmwareVersionOutput>, ApiResponseError> {
         return makeApiCall {
             service.getLatestFirmwareVersion()
         }
@@ -35,5 +35,4 @@ class TangoFirmwareApiImpl(
             }
         }
     }
-
 }
