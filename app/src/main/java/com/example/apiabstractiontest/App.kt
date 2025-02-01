@@ -158,7 +158,7 @@ class App: Application() {
                     urlBase = "https://api3.ful-mar.net",
                     certificate = ApiCertificateInput(
                         domain = "api3.ful-mar.net",
-                        certificatePinSHA256 = "sha256/i8DNKKw/fwh789VUrE4VSWuUQWhxnN0NCuMMyeWtN+g="
+                        certificatePinSHA256 = "sha256/jU8P1uAp6g/xcQg/DeGxsi33poQjhMT9wmRFzR/AKsI="
                     )
                 )
             },
