@@ -14,18 +14,14 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_19
+        targetCompatibility = JavaVersion.VERSION_19
     }
 
-    kotlinOptions {
-        jvmTarget = "1.8"
+kotlinOptions {
+        jvmTarget = "19"
     }
 
-}
-
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
 }
 
 dependencies {
@@ -33,10 +29,11 @@ dependencies {
     implementation(libs.supermegazinc.logger)
     implementation(libs.supermegazinc.escentials)
     implementation(libs.converter.gson)
-    implementation(libs.core.ktx)
     implementation(project(":fulmar:system:api"))
+    implementation(project(":supermegazinc:json"))
     implementation(libs.androidx.junit.ktx)
-    testImplementation(libs.junit.jupiter)
-    androidTestImplementation(libs.junit.junit)
+    testImplementation(libs.junit)
+    testImplementation(libs.androidx.runner)
+    androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.runner)
 }

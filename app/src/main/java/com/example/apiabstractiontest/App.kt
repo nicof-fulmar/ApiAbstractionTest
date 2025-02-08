@@ -8,10 +8,14 @@ import com.example.apiabstractiontest.ble_test.BLETestK
 import com.example.apiabstractiontest.ble_test.BLETestSuite
 import com.example.apiabstractiontest.ble_test.CryptographyControllerTestImpl
 import com.example.apiabstractiontest.ble_test.TangoL1ControllerTestFirmwareImpl
+import com.fulmar.api.createApiService
 import com.fulmar.api.di.ApiModuleInitializer
 import com.fulmar.api.model.ApiCertificateInput
+import com.fulmar.firmware.TangoFirmwareController
 import com.fulmar.firmware.feature_api.TangoFirmwareApiImpl
+import com.fulmar.firmware.feature_api.service.TangoFirmwareApiService
 import com.fulmar.tango.layer1.TangoL1Controller
+import com.fulmar.tango.layer1.TangoL1ControllerImpl
 import com.fulmar.tango.session.TangoSessionController
 import com.fulmar.tango.session.TangoSessionControllerImpl
 import com.fulmar.tango.trama.controllers.TramaControllerImpl
@@ -49,6 +53,10 @@ class App: Application() {
         bleTestSuite = BLETestSuite(
             logger,
             coroutineScope
+        )
+
+        tangoSession = TangoSessionControllerImpl(
+            logger
         )
 
         ///*
@@ -89,6 +97,30 @@ class App: Application() {
             logger = logger
         )
 
+        tangoL1Controller = TangoL1ControllerImpl(
+            tangoFirmwareApiFactory = {
+                TangoFirmwareApiImpl(
+                    logger = logger,
+                    serviceFactory = {
+                        createApiService(
+                            urlBase = "https://api3.ful-mar.net",
+                            certificate = ApiCertificateInput(
+                                domain = "api3.ful-mar.net",
+                                certificatePinSHA256 = "sha256/jU8P1uAp6g/xcQg/DeGxsi33poQjhMT9wmRFzR/AKsI="
+                            ),
+                            logger = logger,
+                            serviceClass = TangoFirmwareApiService::class.java
+                        )
+                    }
+                )
+            },
+            bleUpgrade,
+            cryptographyController,
+            tangoSession,
+            TramaControllerImpl(),
+            logger,
+            coroutineScope,
+        )
         //*/
 
 
@@ -133,42 +165,8 @@ class App: Application() {
             logger = logger
         )
 
+
          */
 
-        tangoSession = TangoSessionControllerImpl(
-            logger
-        )
-
-        /*
-        tangoL1Controller = TangoL1ControllerTestConexionImpl(
-            bleTestSuite,
-            bleUpgrade,
-            cryptographyController,
-            tangoSession,
-            TramaControllerImpl(),
-            logger,
-            coroutineScope,
-            context = applicationContext
-        )
-         */
-
-        tangoL1Controller = TangoL1ControllerTestFirmwareImpl(
-            tangoFirmwareApiFactory = {
-                TangoFirmwareApiImpl(
-                    urlBase = "https://api3.ful-mar.net",
-                    certificate = ApiCertificateInput(
-                        domain = "api3.ful-mar.net",
-                        certificatePinSHA256 = "sha256/jU8P1uAp6g/xcQg/DeGxsi33poQjhMT9wmRFzR/AKsI="
-                    )
-                )
-            },
-            bleTestSuite,
-            bleUpgrade,
-            cryptographyController,
-            tangoSession,
-            TramaControllerImpl(),
-            logger,
-            coroutineScope,
-        )
     }
 }

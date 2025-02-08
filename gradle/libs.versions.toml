@@ -1,30 +1,28 @@
 [versions]
 agp = "8.7.3"
 converterGson = "2.9.0"
-kotlinReflectVersion = "1.9.21"
 kotlin = "1.9.24"
 coreKtx = "1.15.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
-espressoCore = "3.6.1"
 appcompat = "1.7.0"
-kotlinReflect = "1.9.23"
+kotlinReflect = "1.9.24"
 material = "1.12.0"
-activityCompose = "1.9.3"
+activityCompose = "1.10.0"
 
 runner = "1.6.2"
 supermegazincLogger = "2.1"
 supermegazincEssentials = "2.2"
 supermegazincBle = "3.0.0"
-supermegazincBleUpgrade = "3.0.0-1.0.0"
+supermegazincBleUpgrade = "3.0.1-1.0.0"
 supermegazincCrypto = "1.1"
 supermegazincDiffieHellman = "1.0"
 junitJupiter = "5.8.1"
 
 retrofit = "2.9.0"
 coreKtxVersion = "1.6.1"
-junitJunit = "4.12"
 junitKtx = "1.2.1"
+espressoCore = "3.6.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -35,7 +33,6 @@ retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit
 
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
-androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlinReflect" }
@@ -50,8 +47,8 @@ supermegazinc-cryptography = { module = "com.supermegazinc.libraries:cryptograph
 supermegazinc-diffiehellman = { module = "com.supermegazinc.libraries:diffie_hellman", version.ref = "supermegazincDiffieHellman" }
 junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junitJupiter" }
 core-ktx = { group = "androidx.test", name = "core-ktx", version.ref = "coreKtxVersion" }
-junit-junit = { group = "junit", name = "junit", version.ref = "junitJunit" }
 androidx-junit-ktx = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "junitKtx" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

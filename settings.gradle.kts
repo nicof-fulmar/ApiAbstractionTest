@@ -1,11 +1,6 @@
 import java.io.FileInputStream
 import java.util.Properties
 
-include(":fulmar:system:application")
-
-
-include(":fulmar:system:api")
-
 
 pluginManagement {
     repositories {
@@ -39,3 +34,6 @@ include(":fulmar:tango:session")
 include(":fulmar:tango:layer1")
 include(":fulmar:tango:trama")
 include(":fulmar:tango:firmware")
+include(":supermegazinc:json")
+include(":fulmar:system:application")
+include(":fulmar:system:api")

@@ -20,6 +20,8 @@
             <option value="$PROJECT_DIR$/fulmar/tango/layer1" />
             <option value="$PROJECT_DIR$/fulmar/tango/session" />
             <option value="$PROJECT_DIR$/fulmar/tango/trama" />
+            <option value="$PROJECT_DIR$/supermegazinc" />
+            <option value="$PROJECT_DIR$/supermegazinc/json" />
           </set>
         </option>
         <option name="resolveExternalAnnotations" value="false" />

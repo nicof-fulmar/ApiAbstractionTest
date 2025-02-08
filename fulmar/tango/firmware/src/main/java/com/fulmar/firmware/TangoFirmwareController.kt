@@ -1,6 +1,9 @@
 package com.fulmar.firmware
 
+import com.fulmar.api.model.ApiResponseError
 import com.fulmar.firmware.feature_api.TangoFirmwareApi
+import com.fulmar.firmware.feature_api.model.CheckAndFetchInput
+import com.fulmar.firmware.feature_api.model.CheckAndFetchOutput
 import com.fulmar.firmware.feature_update.model.TangoFirmwareUpdateStatus
 import com.fulmar.firmware.feature_update.util.tangoFirmwareUpdater
 import com.fulmar.firmware.service.tangoFirmwareVersionService
@@ -46,17 +49,15 @@ class TangoFirmwareController(
     }
 
     private var updateFirmwareJob: Job? = null
-    private fun taskUpdateFirmware(apiVersion: String) {
+    private fun taskUpdateFirmware(version: String, firmware: ByteArray) {
         updateFirmwareJob?.cancel()
         updateFirmwareJob = coroutineScope.launch {
             try {
                 logger.i(LOG_KEY, "Inicio actualizacion de firmware")
                 _firmwareUpdateStatus.update { TangoFirmwareUpdateStatus.UPDATING }
                 val updateResult = tangoFirmwareUpdater(
-                    version = apiVersion,
-                    onRequestFirmwareBinary = {
-                        (tangoFirmwareApi.fetchFile() as? Result.Success)?.data
-                    },
+                    version = version,
+                    binary = firmware,
                     onSendFirmwareInit = {
                         onSendFirmwareInit(it)
                     },
@@ -87,22 +88,14 @@ class TangoFirmwareController(
         coroutineScope.launch {
             tangoFirmwareVersionService(
                 connected = connected,
-                onRequestApiLatestFirmwareVersion = {
-                    when(val result = tangoFirmwareApi.getLatestFirmwareVersion()) {
-                        is Result.Fail -> {
-                            logger.e(LOG_KEY, "No se pudo solicitar la ultima version disponible: ${result.error}")
-                            null
-                        }
-                        is Result.Success -> {
-                            result.data.data.actualFirmware
-                        }
-                    }
+                onRequestCheckAndFetch = { tangoVersion->
+                    (tangoFirmwareApi.checkAndFetch(CheckAndFetchInput(tangoVersion)) as? Result.Success<CheckAndFetchOutput, ApiResponseError>)?.data
                 },
                 onRequestTangoCurrentFirmwareVersion = {
                     onRequestTangoCurrentFirmwareVersion()
                 },
-                onFirmwareUpdate = { version->
-                    taskUpdateFirmware(version)
+                onFirmwareUpdate = { version, firmware ->
+                    taskUpdateFirmware(version, firmware)
                 },
                 logKey = LOG_KEY,
                 logger = logger

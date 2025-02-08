@@ -48,17 +48,14 @@ dependencies {
     implementation(project(":fulmar:tango:layer1"))
     implementation(project(":fulmar:tango:trama"))
     implementation(project(":fulmar:tango:firmware"))
-
+    implementation(project(":fulmar:system:api"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation(project(":fulmar:system:api"))
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    
 
     //Permite acceder a los datos de las clases
     implementation(libs.kotlin.reflect)

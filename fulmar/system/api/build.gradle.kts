@@ -40,4 +40,5 @@ dependencies {
     implementation(libs.converter.gson)
     implementation(libs.supermegazinc.escentials)
     implementation(libs.supermegazinc.logger)
+    implementation(project(":supermegazinc:json"))
 }

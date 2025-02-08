@@ -13,12 +13,12 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_19
+        targetCompatibility = JavaVersion.VERSION_19
     }
 
-    kotlinOptions {
-        jvmTarget = "1.8"
+kotlinOptions {
+        jvmTarget = "19"
     }
 
 }
@@ -29,7 +29,6 @@ dependencies {
     implementation(libs.supermegazinc.escentials)
     implementation(libs.supermegazinc.logger)
 
-    implementation(libs.supermegazinc.bleupgrade)
     implementation(libs.supermegazinc.diffiehellman)
 
     implementation(libs.supermegazinc.escentials)

@@ -128,6 +128,9 @@ class BLEGattControllerTestImpl(
     override fun discoverServices() {
         logger.d(LOG_KEY, "Descubriendo servicios")
         bleTestSuite.onDiscoverServices()
+        coroutineScope.launch {
+            _serviceEvents.emit(BLESessionServiceEvent.SUCCESS)
+        }
     }
 
     override fun requestMtu(mtu: Int) {

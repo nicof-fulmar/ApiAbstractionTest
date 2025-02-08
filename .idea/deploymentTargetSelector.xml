@@ -5,10 +5,10 @@
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="TangoFirmwareApiImplTest">
+      <SelectionState runConfigName="FirmwareApiImplMockTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="Tests in 'com'">
+      <SelectionState runConfigName="FirmwareApiImplTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

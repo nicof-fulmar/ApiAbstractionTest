@@ -16,7 +16,7 @@ fun <T: Any>createApiService(
     logger: Logger = ApiModuleInitializer._logger
 ): T {
 
-    logger.d("API-SERV", "Creando servicio: ${serviceClass::class.simpleName}")
+    logger.d("API-SERV", "Creando servicio: ${serviceClass::class.java.simpleName}")
 
     val okHttpClientBuilder = OkHttpClient.Builder()
 

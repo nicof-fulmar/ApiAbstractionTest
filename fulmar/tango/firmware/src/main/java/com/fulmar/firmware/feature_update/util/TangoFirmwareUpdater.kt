@@ -8,20 +8,15 @@ import kotlinx.coroutines.channels.ReceiveChannel
 
 suspend fun tangoFirmwareUpdater(
     version: String,
-    onRequestFirmwareBinary: suspend () -> ByteArray?,
+    binary: ByteArray,
     onSendFirmwareInit: suspend (ByteArray) -> Boolean,
     firmwareRx: ReceiveChannel<ByteArray>,
     onSendFirmwareFrame: suspend (ByteArray) -> Boolean,
     logger: Logger,
     logKey: String
 ) : Boolean {
-    logger.i(logKey, "Inicio actualizacion de firmware")
+    logger.i(logKey, "Inicio actualizacion de firmware. Version: '$version'")
     logger.d(logKey, "1. Obtener el binario del firmware")
-    val binary = onRequestFirmwareBinary()
-    if(binary==null || binary.isEmpty()) {
-        logger.e(logKey, "Error al obtener el binario")
-        return false
-    }
     val binarySize = binary.size
     logger.d(logKey, "Binario obtenido con exito. Tamaño: $binarySize bytes")
     logger.d(logKey, "2. Dividir el binario en paquetes de ${TangoFirmwareUpdateConfig.PACKET_SIZE_BYTES} bytes")
