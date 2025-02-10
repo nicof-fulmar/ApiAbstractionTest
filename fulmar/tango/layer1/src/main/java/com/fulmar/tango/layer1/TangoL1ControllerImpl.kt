@@ -233,7 +233,16 @@ class TangoL1ControllerImpl(
                         .mapNotNull { it.firstOrNull {char-> TangoL1Config.CHARACTERISTIC_SEND_KEY == char.uuid} }
                         .filterNotNull()
                         .firstWithTimeout(5000)
-                    logger.d(LOG_KEY,"Encontrada, enviando clave publica [${publicKey.size}]: ${publicKey.toList()}")
+                    logger.d(LOG_KEY,"Encontrada, seteando notificacion de telemetria antes de enviar la clave publica..")
+
+                    val tCharacteristicReceiveTelemetry = characteristicReceiveTelemetry.firstOrNull() ?: run a@ {
+                        logger.e(LOG_KEY, "No se encontro la caracteristica TelemetryRx")
+                        return@run false
+                    }
+
+                    tCharacteristicReceiveTelemetry.setNotification(true)
+
+                    logger.d(LOG_KEY,"Seteado, enviando clave publica [${publicKey.size}]: ${publicKey.toList()}")
 
                     sendCharacteristic.send(publicKeySignedFull)
 
