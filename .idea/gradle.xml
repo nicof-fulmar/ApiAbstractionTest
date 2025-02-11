@@ -22,6 +22,7 @@
             <option value="$PROJECT_DIR$/fulmar/tango/trama" />
             <option value="$PROJECT_DIR$/supermegazinc" />
             <option value="$PROJECT_DIR$/supermegazinc/json" />
+            <option value="$PROJECT_DIR$/supermegazinc/permission" />
           </set>
         </option>
         <option name="resolveExternalAnnotations" value="false" />

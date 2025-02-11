@@ -1,6 +1,9 @@
 import java.io.FileInputStream
 import java.util.Properties
 
+include(":supermegazinc:permission")
+
+
 
 pluginManagement {
     repositories {
